@@ -42,6 +42,36 @@ const allParagraphs = [
   "Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.",
 ];
 
+// Heading phrases for randomized headers - mix of short and longer
+const headingPhrases = [
+  // Short (1-2 words)
+  "Overview",
+  "Introduction",
+  "Summary",
+  "Details",
+  "Features",
+  "Usage",
+  "Examples",
+  "Notes",
+  // Medium (2-3 words)
+  "Lorem Ipsum",
+  "Dolor Sit Amet",
+  "Getting Started",
+  "Key Concepts",
+  "Best Practices",
+  "Common Patterns",
+  "Quick Reference",
+  // Longer (4+ words)
+  "Consectetur Adipiscing Elit",
+  "Sed Do Eiusmod Tempor",
+  "Understanding the Basics",
+  "Advanced Configuration Options",
+  "Working with Components",
+  "Implementation Guidelines",
+  "Troubleshooting Common Issues",
+  "Performance Optimization Tips",
+];
+
 // Simple seeded random number generator
 function seededRandom(seedValue: number): {
   next: () => number;
@@ -66,17 +96,39 @@ function shuffleWithSeed(array: string[], seedValue: number): string[] {
   const rng = seededRandom(seedValue);
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(rng.next() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    const temp = shuffled[i]!;
+    shuffled[i] = shuffled[j]!;
+    shuffled[j] = temp;
   }
   return shuffled;
 }
 
 const generatedText = computed(() => {
   const paragraphs = shuffleWithSeed(allParagraphs, seed.value);
+  const headings = shuffleWithSeed(headingPhrases, seed.value + 500);
   const rng = seededRandom(seed.value + 1000); // Different seed for block sizes
-  const blockSeparator = options.noWrap ? "<br><br>" : "\n\n";
+  const blockSeparator = options.noWrap ? " " : "\n\n";
   let output = "";
   let paragraphIndex = 0;
+  let headingIndex = 0;
+  let currentHeadingLevel = 1; // Start at H1
+  let blocksUntilNextHeading = 0; // Counter for skipping blocks
+
+  // Helper to get next heading text
+  const getNextHeading = (): string => {
+    const text = headings[headingIndex % headings.length] ?? "Section";
+    headingIndex++;
+    return options.capitalize ? text : text.toLowerCase();
+  };
+
+  // Helper to generate heading markdown
+  const makeHeading = (level: number, text: string) => {
+    const hashes = "#".repeat(level);
+    if (options.noWrap) {
+      return `${hashes} ${text} `;
+    }
+    return `${hashes} ${text}\n\n`;
+  };
 
   for (let i = 0; i < blocks.value; i++) {
     // Random block size: 1-3 sentences
@@ -84,39 +136,59 @@ const generatedText = computed(() => {
     let blockContent = "";
 
     for (let j = 0; j < blockSize; j++) {
-      let sentence = paragraphs[paragraphIndex % paragraphs.length];
+      const rawSentence = paragraphs[paragraphIndex % paragraphs.length] ?? "";
       paragraphIndex++;
 
       // Apply capitalize option
-      if (!options.capitalize) {
-        sentence = sentence.toLowerCase();
-      }
+      const sentence = options.capitalize
+        ? rawSentence
+        : rawSentence.toLowerCase();
 
       blockContent += sentence + " ";
     }
 
     blockContent = blockContent.trim();
 
-    if (options.headers && i % 2 === 0) {
-      const headerText = options.capitalize
-        ? `Section ${i + 1}`
-        : `section ${i + 1}`;
-      if (options.noWrap) {
-        output += `## ${headerText}${blockSeparator}`;
+    // Header logic with hierarchy
+    if (options.headers) {
+      if (i === 0) {
+        // Always start with H1
+        output += makeHeading(1, getNextHeading());
+        currentHeadingLevel = 2;
+        blocksUntilNextHeading = rng.nextInt(1, 3); // Skip 1-3 blocks before next heading
+      } else if (blocksUntilNextHeading <= 0) {
+        // Time for a new heading
+        // Randomly decide: go deeper, stay same, or go up
+        const decision = rng.nextInt(1, 10);
+        if (decision <= 3 && currentHeadingLevel < 4) {
+          // 30% chance: go deeper (max H4)
+          currentHeadingLevel++;
+        } else if (decision <= 5 && currentHeadingLevel > 2) {
+          // 20% chance: go up one level (min H2)
+          currentHeadingLevel--;
+        } else if (decision <= 7 && currentHeadingLevel > 2) {
+          // 20% chance: reset to H2
+          currentHeadingLevel = 2;
+        }
+        // 30% chance: stay at same level
+
+        output += makeHeading(currentHeadingLevel, getNextHeading());
+        blocksUntilNextHeading = rng.nextInt(1, 4); // Skip 1-4 blocks before next heading
       } else {
-        output += `## ${headerText}\n\n`;
+        blocksUntilNextHeading--;
       }
     }
+
     if (options.codeSnippets && i % 3 === 0) {
       if (options.noWrap) {
-        output += `\`const example = 'code';\`${blockSeparator}`;
+        output += `\`const example = 'code';\` `;
       } else {
         output += "```javascript\nconst example = 'code';\n```\n\n";
       }
     }
     if (options.blockquotes && i % 2 === 1) {
       if (options.noWrap) {
-        output += `> ${blockContent.slice(0, 100)}...${blockSeparator}`;
+        output += `> ${blockContent.slice(0, 100)}... `;
       } else {
         output += `> ${blockContent.slice(0, 100)}...\n\n`;
       }
@@ -126,7 +198,7 @@ const generatedText = computed(() => {
         const items = options.capitalize
           ? "• Item one • Item two • Item three"
           : "• item one • item two • item three";
-        output += items + blockSeparator;
+        output += items + " ";
       } else {
         const items = options.capitalize
           ? "- Item one\n- Item two\n- Item three\n\n"
@@ -136,15 +208,21 @@ const generatedText = computed(() => {
     }
     if (options.links && i % 4 === 0) {
       const linkText = options.capitalize ? "Learn more" : "learn more";
-      output += `[${linkText}](https://example.com)${blockSeparator}`;
+      output += `[${linkText}](https://example.com) `;
     }
     output += blockContent + blockSeparator;
   }
 
-  // Remove trailing separator
-  if (options.noWrap && output.endsWith("<br><br>")) {
-    output = output.slice(0, -8);
-  } else if (!options.noWrap && output.endsWith("\n\n")) {
+  // Remove trailing separator and clean up for noWrap mode
+  if (options.noWrap) {
+    // Remove any <br> tags that might have been introduced
+    output = output.replace(/<br\s*\/?>/gi, " ");
+    // Replace any remaining newlines with spaces
+    output = output.replace(/\n+/g, " ");
+    // Collapse multiple spaces into one
+    output = output.replace(/\s+/g, " ");
+    output = output.trim();
+  } else if (output.endsWith("\n\n")) {
     output = output.slice(0, -2);
   }
 
@@ -213,7 +291,7 @@ const markdownOptions = [
           aria-label="Main navigation"
         >
           <a
-            href="https://github.com"
+            href="https://github.com/ICJIA/ipsumify-next-2026"
             target="_blank"
             rel="noopener noreferrer"
             class="flex items-center gap-2 text-sm text-[#d1d5db] transition-colors hover:text-[#fafafa]"
@@ -231,7 +309,7 @@ const markdownOptions = [
 
     <main id="main-content" class="mx-auto max-w-6xl px-6 py-12">
       <!-- Hero -->
-      <div class="mb-12 text-center">
+      <div class="mb-16 text-center md:mb-20">
         <div
           class="mb-4 inline-flex items-center gap-2 rounded-full border border-[#1a1a1a] bg-[#111] px-4 py-1.5 text-xs text-[#00d4aa]"
         >
@@ -242,18 +320,13 @@ const markdownOptions = [
           Markdown-ready Lorem Ipsum
         </div>
         <h1
-          class="mb-4 font-mono text-4xl font-bold tracking-tight md:text-5xl"
+          class="mb-4 font-sans text-4xl font-black tracking-tight md:text-5xl"
         >
-          Generate Placeholder Text
-          <br />
-          <span class="mt-2 inline-block text-[#d1d5db]"
-            >for Writers and Designers</span
-          >
+          Create beautiful placeholder text
         </h1>
         <p class="mx-auto max-w-xl text-[#d1d5db]">
-          Create markdown-formatted lorem ipsum with code blocks, headers, and
-          more. Built for writers and designers who need realistic placeholder
-          content.
+          The friendliest lorem ipsum generator around. Perfect for designers,
+          writers, and anyone who needs placeholder text.
         </p>
       </div>
 
@@ -361,7 +434,7 @@ const markdownOptions = [
                   v-model="options.noWrap"
                   color="primary"
                   size="md"
-                  aria-label="No wrap - use HTML breaks instead of line breaks"
+                  aria-label="No wrap - combine all blocks into continuous text"
                 />
               </div>
             </div>
@@ -383,9 +456,11 @@ const markdownOptions = [
         </div>
 
         <!-- Output Panel -->
-        <div class="flex flex-col rounded-lg border border-[#1a1a1a] bg-[#111]">
+        <div
+          class="flex flex-col rounded-lg border border-[#2a2a2a] bg-[#161616]"
+        >
           <div
-            class="flex items-center justify-between border-b border-[#1a1a1a] px-4 py-3"
+            class="flex items-center justify-between border-b border-[#2a2a2a] bg-[#1a1a1a] px-4 py-3"
           >
             <button
               class="flex items-center gap-2 transition-colors hover:text-[#00d4aa]"
