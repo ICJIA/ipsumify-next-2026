@@ -362,7 +362,6 @@ const markdownOptions = [
                 color="primary"
                 size="md"
                 name="blocks"
-                aria-label="Number of blocks"
               />
             </div>
 
