@@ -1,4 +1,6 @@
-# Ipsumify: Create Placeholder Text
+# Ipsumify
+
+### Easily Create Placeholder Text
 
 [![Nuxt 4](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=flat&logo=nuxt.js&logoColor=white)](https://nuxt.com/)
 [![Nuxt UI](https://img.shields.io/badge/Nuxt_UI-4.x-00DC82?style=flat&logo=nuxt.js&logoColor=white)](https://ui.nuxt.com/)
