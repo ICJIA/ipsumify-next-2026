@@ -1,17 +1,17 @@
 <script setup lang="ts">
 useHead({
   htmlAttrs: {
-    lang: 'en',
-    class: 'dark'
+    lang: "en",
+    class: "dark",
   },
   bodyAttrs: {
-    class: 'antialiased'
-  }
-})
+    class: "antialiased",
+  },
+});
 </script>
 
 <template>
-  <UApp>
+  <UApp :toaster="null">
     <NuxtPage />
   </UApp>
 </template>

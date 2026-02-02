@@ -134,13 +134,22 @@ yarn generate
 # Deploy this folder to any static hosting service
 ```
 
-## Lighthouse Scores
+## Accessibility & Quality Scores
+
+### Lighthouse
 
 | Category       | Score |
 | -------------- | ----- |
 | Accessibility  | 100   |
 | Best Practices | 100   |
 | SEO            | 100   |
+
+### axe-core
+
+| Metric       | Result |
+| ------------ | ------ |
+| Violations   | 0      |
+| Passes       | 37     |
 
 ## Contributing
 
