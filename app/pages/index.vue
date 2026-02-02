@@ -1,7 +1,23 @@
 <script setup lang="ts">
+// SEO Meta Tags
+useSeoMeta({
+  title: "Ipsumify - Lorem Ipsum Generator",
+  ogTitle: "Ipsumify - Lorem Ipsum Generator",
+  description:
+    "Generate beautiful lorem ipsum placeholder text with markdown support. Built for writers and designers who need realistic placeholder content.",
+  ogDescription:
+    "Generate beautiful lorem ipsum placeholder text with markdown support. Built for writers and designers who need realistic placeholder content.",
+  ogType: "website",
+  twitterCard: "summary_large_image",
+  twitterTitle: "Ipsumify - Lorem Ipsum Generator",
+  twitterDescription:
+    "Generate beautiful lorem ipsum placeholder text with markdown support.",
+});
+
 const blocks = ref(3);
 const copied = ref(false);
-const seed = ref(Math.floor(Math.random() * 100000));
+// Use a fixed initial seed to avoid hydration mismatch (server vs client)
+const seed = ref(42);
 
 const options = reactive({
   headers: false,
@@ -10,6 +26,7 @@ const options = reactive({
   lists: false,
   links: false,
   capitalize: true,
+  noWrap: false,
 });
 
 const allParagraphs = [
@@ -57,6 +74,7 @@ function shuffleWithSeed(array: string[], seedValue: number): string[] {
 const generatedText = computed(() => {
   const paragraphs = shuffleWithSeed(allParagraphs, seed.value);
   const rng = seededRandom(seed.value + 1000); // Different seed for block sizes
+  const blockSeparator = options.noWrap ? "<br><br>" : "\n\n";
   let output = "";
   let paragraphIndex = 0;
 
@@ -83,27 +101,54 @@ const generatedText = computed(() => {
       const headerText = options.capitalize
         ? `Section ${i + 1}`
         : `section ${i + 1}`;
-      output += `## ${headerText}\n\n`;
+      if (options.noWrap) {
+        output += `## ${headerText}${blockSeparator}`;
+      } else {
+        output += `## ${headerText}\n\n`;
+      }
     }
     if (options.codeSnippets && i % 3 === 0) {
-      output += "```javascript\nconst example = 'code';\n```\n\n";
+      if (options.noWrap) {
+        output += `\`const example = 'code';\`${blockSeparator}`;
+      } else {
+        output += "```javascript\nconst example = 'code';\n```\n\n";
+      }
     }
     if (options.blockquotes && i % 2 === 1) {
-      output += `> ${blockContent.slice(0, 100)}...\n\n`;
+      if (options.noWrap) {
+        output += `> ${blockContent.slice(0, 100)}...${blockSeparator}`;
+      } else {
+        output += `> ${blockContent.slice(0, 100)}...\n\n`;
+      }
     }
     if (options.lists && i % 3 === 2) {
-      const items = options.capitalize
-        ? "- Item one\n- Item two\n- Item three\n\n"
-        : "- item one\n- item two\n- item three\n\n";
-      output += items;
+      if (options.noWrap) {
+        const items = options.capitalize
+          ? "• Item one • Item two • Item three"
+          : "• item one • item two • item three";
+        output += items + blockSeparator;
+      } else {
+        const items = options.capitalize
+          ? "- Item one\n- Item two\n- Item three\n\n"
+          : "- item one\n- item two\n- item three\n\n";
+        output += items;
+      }
     }
     if (options.links && i % 4 === 0) {
       const linkText = options.capitalize ? "Learn more" : "learn more";
-      output += `[${linkText}](https://example.com)\n\n`;
+      output += `[${linkText}](https://example.com)${blockSeparator}`;
     }
-    output += blockContent + "\n\n";
+    output += blockContent + blockSeparator;
   }
-  return output.trim();
+
+  // Remove trailing separator
+  if (options.noWrap && output.endsWith("<br><br>")) {
+    output = output.slice(0, -8);
+  } else if (!options.noWrap && output.endsWith("\n\n")) {
+    output = output.slice(0, -2);
+  }
+
+  return output;
 });
 
 function handleRegenerate() {
@@ -273,8 +318,7 @@ const markdownOptions = [
                   v-model="options[opt.key as keyof typeof options]"
                   color="primary"
                   size="md"
-                  :label="opt.label"
-                  class="[&>label]:sr-only"
+                  :aria-label="opt.label"
                 />
               </div>
             </div>
@@ -301,8 +345,23 @@ const markdownOptions = [
                   v-model="options.capitalize"
                   color="primary"
                   size="md"
-                  label="Capitalize sentences"
-                  class="[&>label]:sr-only"
+                  aria-label="Capitalize sentences"
+                />
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <UIcon
+                    name="i-lucide-wrap-text"
+                    class="h-4 w-4 text-[#9ca3af]"
+                    aria-hidden="true"
+                  />
+                  <span class="text-sm text-[#d1d5db]">No wrap</span>
+                </div>
+                <USwitch
+                  v-model="options.noWrap"
+                  color="primary"
+                  size="md"
+                  aria-label="No wrap - use HTML breaks instead of line breaks"
                 />
               </div>
             </div>
