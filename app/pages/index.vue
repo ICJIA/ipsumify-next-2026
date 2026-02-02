@@ -435,6 +435,23 @@ function handleRegenerate() {
   seed.value = Math.floor(Math.random() * 100000);
 }
 
+function handleReset() {
+  // Reset all settings to defaults
+  blocks.value = 3;
+  seed.value = 42;
+  selectedTheme.value = "lorem";
+  options.headers = false;
+  options.codeSnippets = false;
+  options.blockquotes = false;
+  options.lists = false;
+  options.links = false;
+  options.capitalize = true;
+  options.noWrap = false;
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 async function handleCopy() {
   await navigator.clipboard.writeText(generatedText.value);
   copied.value = true;
@@ -477,7 +494,11 @@ const markdownOptions = [
     <!-- Header -->
     <header class="border-b border-[#1a1a1a] px-6 py-6">
       <div class="mx-auto flex max-w-6xl items-center justify-between">
-        <div class="flex items-center gap-4">
+        <button
+          class="flex cursor-pointer items-center gap-4 transition-opacity hover:opacity-80"
+          aria-label="Reset to defaults and scroll to top"
+          @click="handleReset"
+        >
           <UIcon
             name="i-lucide-code"
             class="h-14 w-14 text-[#00d4aa]"
@@ -487,7 +508,7 @@ const markdownOptions = [
             class="font-sans text-5xl font-black tracking-tight sm:text-6xl md:text-7xl"
             >Ipsumify</span
           >
-        </div>
+        </button>
         <nav
           class="flex h-full items-center self-center"
           aria-label="Main navigation"
