@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import config from './ipsumify.config'
+
 export default defineNuxtConfig({
   compatibilityDate: '2026-02-02',
   devtools: { enabled: false },
@@ -9,10 +11,10 @@ export default defineNuxtConfig({
 
   // Site configuration for SEO
   site: {
-    url: 'https://ipsumify.netlify.app',
-    name: 'Ipsumify',
-    description: 'Generate beautiful lorem ipsum placeholder text with markdown support. Built for writers and designers who need realistic placeholder content.',
-    defaultLocale: 'en'
+    url: config.url,
+    name: config.name,
+    description: config.description,
+    defaultLocale: config.defaultLocale
   },
 
   // Color mode configuration
@@ -58,12 +60,18 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Ipsumify - Lorem Ipsum Generator',
+      htmlAttrs: {
+        lang: config.defaultLocale
+      },
+      title: config.title,
       meta: [
-        { name: 'description', content: 'Generate beautiful lorem ipsum placeholder text with markdown support' }
+        { name: 'description', content: config.shortDescription },
+        { name: 'theme-color', content: config.primaryColor },
+        { name: 'msapplication-TileColor', content: config.tileColor }
       ],
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/icon.svg' }
+        { rel: 'icon', type: 'image/svg+xml', href: config.faviconPath },
+        { rel: 'canonical', href: config.url }
       ]
     }
   }

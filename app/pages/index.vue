@@ -1,17 +1,38 @@
 <script setup lang="ts">
+import config from "../../ipsumify.config";
+
 // SEO Meta Tags
 useSeoMeta({
-  title: "Ipsumify - Lorem Ipsum Generator",
-  ogTitle: "Ipsumify - Lorem Ipsum Generator",
-  description:
-    "Generate beautiful lorem ipsum placeholder text with markdown support. Built for writers and designers who need realistic placeholder content.",
-  ogDescription:
-    "Generate beautiful lorem ipsum placeholder text with markdown support. Built for writers and designers who need realistic placeholder content.",
+  title: config.title,
+  description: config.description,
   ogType: "website",
+  ogTitle: config.title,
+  ogDescription: config.description,
+  ogUrl: config.url,
+  ogSiteName: config.name,
+  ogLocale: config.locale,
+  ogImage: config.ogImageUrl,
+  ogImageWidth: config.ogImageWidth,
+  ogImageHeight: config.ogImageHeight,
+  ogImageAlt: config.ogImageAlt,
+  ogImageType: "image/png",
   twitterCard: "summary_large_image",
-  twitterTitle: "Ipsumify - Lorem Ipsum Generator",
-  twitterDescription:
-    "Generate beautiful lorem ipsum placeholder text with markdown support.",
+  twitterTitle: config.title,
+  twitterDescription: config.shortDescription,
+  twitterImage: config.ogImageUrl,
+  twitterImageAlt: config.ogImageAlt,
+  author: config.author,
+  colorScheme: "dark",
+  themeColor: config.primaryColor,
+});
+
+// Always start at top of page (client-side only)
+onMounted(() => {
+  if (import.meta.client) {
+    nextTick(() => {
+      window.scrollTo(0, 0);
+    });
+  }
 });
 
 const blocks = ref(3);
@@ -514,7 +535,7 @@ const markdownOptions = [
           aria-label="Main navigation"
         >
           <a
-            href="https://github.com/ICJIA/ipsumify-next-2026"
+            :href="config.github"
             target="_blank"
             rel="noopener noreferrer"
             class="flex items-center gap-2 text-sm text-[#d1d5db] transition-colors hover:text-[#fafafa]"
@@ -765,7 +786,7 @@ const markdownOptions = [
         class="mx-auto flex max-w-6xl items-center justify-between text-xs text-[#9ca3af]"
       >
         <span>Built for Writers and Designers</span>
-        <span class="font-mono">v1.0.0</span>
+        <span class="font-mono">v{{ config.version }}</span>
       </div>
     </footer>
   </div>
