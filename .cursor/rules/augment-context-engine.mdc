@@ -1,0 +1,33 @@
+---
+description: Use Augment Context Engine for all code searching and indexing
+alwaysApply: true
+---
+
+# Code Search: Augment Context Engine
+
+**Always use the Augment Context Engine MCP server** (`user-augment-context-engine`) for code searching and indexing.
+
+## Tool to Use
+
+- **Server**: `user-augment-context-engine`
+- **Tool**: `codebase-retrieval`
+- **Parameter**: `information_request` — a natural language description of the code you need
+
+## When to Use
+
+- When you don't know which files contain the information you need
+- When gathering high-level information about a task
+- When understanding the codebase in general
+- Before making edits — ask for detailed information about the code you want to change
+
+## Do NOT Use For
+
+- Exact string matching (use Grep instead)
+- Finding all references to a known identifier (use Grep instead)
+- Reading a specific file you already know (use Read tool instead)
+
+## Examples of Good Queries
+
+- "Where is the function that handles user authentication?"
+- "What tests are there for the login functionality?"
+- "How is the database connected to the application?"

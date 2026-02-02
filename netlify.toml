@@ -1,13 +1,13 @@
 [build]
-  command = "yarn generate"
-  publish = ".output/public"
+command = "yarn generate"
+publish = ".output/public"
 
 [build.environment]
-  NODE_VERSION = "20"
+NODE_VERSION = "22"
 
 [[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "strict-origin-when-cross-origin"

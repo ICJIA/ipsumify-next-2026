@@ -1,11 +1,20 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+/**
+ * Nuxt configuration for Ipsumify.
+ *
+ * Uses ipsumify.config as the single source of truth for site metadata.
+ * Generates a static site suitable for Netlify deployment.
+ *
+ * @see https://nuxt.com/docs/api/configuration/nuxt-config
+ * @module nuxt.config
+ */
 import config from './ipsumify.config'
 
+/** @type {import('nuxt/schema').NuxtConfig} */
 export default defineNuxtConfig({
   compatibilityDate: '2026-02-02',
   devtools: { enabled: false },
 
-  modules: ['@nuxt/ui', '@nuxtjs/seo'],
+  modules: ['@nuxt/ui', '@nuxtjs/seo', '@nuxt/eslint'],
 
   css: ['~/assets/css/main.css'],
 
