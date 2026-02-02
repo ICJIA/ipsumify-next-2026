@@ -64,7 +64,7 @@ export const config = {
   /** @type {string} Default theme ID for generator (e.g. lorem, dog, cat) */
   defaultThemeId: "lorem",
   /** @type {number} Default number of text blocks to generate */
-  defaultBlocks: 3,
+  defaultBlocks: 5,
   /** @type {number} Initial seed for deterministic output (SSR-safe) */
   defaultSeed: 42,
 } as const;
