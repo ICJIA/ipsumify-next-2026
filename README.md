@@ -11,7 +11,7 @@
 
 > The friendliest lorem ipsum generator around. Perfect for designers, writers, and anyone who needs placeholder text.
 
-![Ipsumify Screenshot](documentation/screenshot.jpg)
+![Ipsumify Screenshot](documentation/screenshot2.jpg)
 
 ## Features
 
