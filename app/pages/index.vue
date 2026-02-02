@@ -322,7 +322,7 @@ const markdownOptions = [
         <h1
           class="mb-4 font-sans text-4xl font-black tracking-tight md:text-5xl"
         >
-          Create beautiful placeholder text
+          Create placeholder text
         </h1>
         <p class="mx-auto max-w-xl text-[#d1d5db]">
           The friendliest lorem ipsum generator around. Perfect for designers,
