@@ -1,0 +1,22 @@
+{
+  "name": "ipsumify",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^3",
+    "nuxt": "^3.16",
+    "tailwindcss": "^4"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  },
+  "packageManager": "yarn@1.22.22"
+}
