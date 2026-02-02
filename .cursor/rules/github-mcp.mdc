@@ -1,0 +1,28 @@
+---
+description: Use GitHub MCP for all repository operations
+alwaysApply: true
+---
+
+# Repository Operations: GitHub MCP
+
+**Always use the GitHub MCP server** (`user-github-official`) for repository-related operations instead of git CLI commands.
+
+## When to Use GitHub MCP
+
+- **Pushing changes** → `push_files` (owner, repo, branch, files, message)
+- **Reading repo state** → `list_commits`, `list_branches`, `get_file_contents`
+- **Creating/updating files** → `create_or_update_file`, `push_files`
+- **Pull requests** → `create_pull_request`, `merge_pull_request`, `pull_request_read`
+- **Issues** → `issue_read`, `issue_write`, `search_issues`
+- **Branches** → `create_branch`, `list_branches`
+
+## Push Workflow
+
+1. Use `push_files` with owner (e.g. `ICJIA`), repo (e.g. `ipsumify-next-2026`), branch (`main`), and file array
+2. Each file: `{ path: "relative/path", content: "full file content" }`
+3. For very large files (e.g. `yarn.lock` >100k chars): push in a separate commit or use `get_file_contents` to fetch current content and merge changes if needed
+
+## Do NOT Use
+
+- `git push`, `git pull`, `git commit` for repo operations
+- Terminal git commands when GitHub MCP can accomplish the task
