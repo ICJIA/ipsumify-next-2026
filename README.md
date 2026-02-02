@@ -16,12 +16,27 @@
 ## Features
 
 - **Markdown-Ready Output** - Generate lorem ipsum with headers, code blocks, blockquotes, lists, and links
+- **Multiple Themes** - Choose from classic Lorem Ipsum or fun themed alternatives
 - **Customizable Blocks** - Control the number of text blocks (1-20)
 - **Formatting Options** - Toggle capitalization and no-wrap mode for cleaner copy-paste
 - **One-Click Actions** - Copy to clipboard or download as `.md` file
 - **Dark Theme** - Beautiful dark UI optimized for developers and designers
 - **Fully Accessible** - 100% Lighthouse accessibility score
 - **SEO Optimized** - Built-in sitemap, robots.txt, and meta tags
+
+## Themes
+
+Ipsumify includes the classic Lorem Ipsum as the default, plus several fun themed alternatives. All themes use Latin-style placeholder text to maintain the traditional Lorem Ipsum aesthetic.
+
+| Theme | Description |
+| ----- | ----------- |
+| **Lorem Ipsum** (default) | Classic Latin placeholder text |
+| **Dog-em Ipsum** | Latinized dog breed names and canine terminology |
+| **Cat-em Ipsum** | Latinized cat breed names and feline terminology |
+| **Baked-em Ipsum** | French and Latin pastry and baking terms |
+| **BBQ-em Ipsum** | Latinized barbecue cuts, techniques, and terminology |
+
+Switch themes using the dropdown in the Options panel. All your other settings (blocks, markdown elements, formatting) are preserved when switching themes.
 
 ## Tech Stack
 
