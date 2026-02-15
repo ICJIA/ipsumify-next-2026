@@ -63,9 +63,9 @@ export default defineNuxtConfig({
     '/': { prerender: true }
   },
 
-  // OG Image configuration
+  // OG Image generation disabled — we define static OG/Twitter tags in app.head
   ogImage: {
-    enabled: false // Disable for this simple app
+    enabled: false
   },
 
   app: {
@@ -77,10 +77,20 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: config.shortDescription },
         { name: 'theme-color', content: config.primaryColor },
-        { name: 'msapplication-TileColor', content: config.tileColor }
+        { name: 'msapplication-TileColor', content: config.tileColor },
+        { property: 'og:title', content: config.title },
+        { property: 'og:description', content: config.shortDescription },
+        { property: 'og:image', content: config.ogImageUrl },
+        { property: 'og:url', content: config.url },
+        { property: 'og:type', content: 'website' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: config.title },
+        { name: 'twitter:description', content: config.shortDescription },
+        { name: 'twitter:image', content: config.ogImageUrl }
       ],
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: config.faviconPath }
+        { rel: 'icon', type: 'image/svg+xml', href: config.faviconPath },
+        { rel: 'canonical', href: config.url }
       ]
     }
   }
