@@ -7,14 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-02-15
+
 ### Added
+- Docker support: Dockerfile, docker-compose.yml, and .dockerignore for self-hosting on port 5150
+- Deployment guides for DigitalOcean droplets and Laravel Forge with nginx reverse proxy
+- Keyboard shortcut feedback indicator (brief notification on shortcut use)
+- README table of contents
+- README features: shareable URLs, keyboard shortcuts, Docker, deterministic output
+- README section: SEO with `ssr: false` (problem/solution documentation)
 - Vitest testing framework with unit tests for random number generation
 - Enhanced security headers (CSP, HSTS, Permissions-Policy, X-XSS-Protection)
 - Error handling for clipboard operations with fallback for older browsers
 - Error boundaries for graceful error recovery
 - localStorage persistence for user preferences (theme, blocks, markdown options)
 - Keyboard shortcuts (Alt+Shift+R, Alt+Shift+C, Alt+Shift+D, ?)
-- Keyboard shortcuts help modal
+- Keyboard shortcuts help modal with per-key display
 - Share URL feature - encode settings in URL parameters
 - GitHub Actions CI/CD workflow for automated testing and building
 - GitHub community files (CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md)
@@ -26,8 +34,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extracted magic numbers to named constants (LCPRNG parameters, seed offsets)
 - Updated dependencies to latest versions
 - Improved copy button with error state feedback
+- Renamed footer "Shortcuts" to "Keyboard Shortcuts"
 
 ### Fixed
+- Keyboard shortcuts now work on macOS (Option+Shift produces special characters; match on `event.code` instead of `event.key`)
+- OG, Twitter Card, and canonical meta tags now appear in prerendered HTML (required for crawlers with `ssr: false`)
+- `og:image` uses absolute URL instead of relative path (fixes social media previews)
+- Iconify API added to CSP `connect-src` for icon loading
+- Corrected Netlify publish directory
 - Copy to clipboard now handles browser compatibility with fallback method
 
 ## [2.0.0] - 2026-02-15
@@ -46,5 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/ICJIA/ipsumify-next-2026/releases/tag/v2.0.0
