@@ -307,6 +307,221 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 2. Netlify will automatically detect the build settings from `netlify.toml`
 3. Deploy!
 
+### Docker (Self-Hosted)
+
+Run Ipsumify on any server with Docker installed:
+
+```bash
+docker compose up --build -d
+```
+
+The app will be available at `http://localhost:5150`.
+
+The Docker build uses `NITRO_PRESET=node-server` to produce a standalone Node.js server instead of the Netlify-specific output. No changes to `nuxt.config.ts` are needed — the environment variable overrides the preset at build time.
+
+To stop:
+
+```bash
+docker compose down
+```
+
+### Nginx Reverse Proxy
+
+To serve Ipsumify behind nginx with SSL on a domain, add a server block like this:
+
+```nginx
+server {
+    listen 80;
+    server_name ipsumify.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name ipsumify.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/ipsumify.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ipsumify.example.com/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:5150;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Replace `ipsumify.example.com` with your domain and adjust the certificate paths as needed.
+
+### DigitalOcean Droplet
+
+Deploy Ipsumify on a standard Ubuntu droplet with Docker and nginx.
+
+#### 1. Create the droplet
+
+Create an Ubuntu 24.04 droplet (the $6/mo shared CPU is plenty). Point your domain's A record to the droplet's IP.
+
+#### 2. Install Docker and nginx
+
+```bash
+# Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# Log out and back in for the group change to take effect
+
+# Nginx and Certbot
+sudo apt update && sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+#### 3. Clone and start the app
+
+```bash
+git clone https://github.com/ICJIA/ipsumify-next-2026.git
+cd ipsumify-next-2026
+docker compose up --build -d
+```
+
+Verify the container is running:
+
+```bash
+curl http://localhost:5150
+```
+
+#### 4. Configure nginx
+
+Create `/etc/nginx/sites-available/ipsumify`:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:5150;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable the site and get an SSL certificate:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/ipsumify /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+Certbot will automatically update the nginx config to handle SSL and redirect HTTP to HTTPS.
+
+#### 5. Auto-start on reboot
+
+Docker's `restart: unless-stopped` policy (already set in `docker-compose.yml`) handles container restarts. Enable Docker and nginx to start on boot:
+
+```bash
+sudo systemctl enable docker nginx
+```
+
+#### Updating
+
+Pull the latest code and rebuild:
+
+```bash
+cd ipsumify-next-2026
+git pull
+docker compose up --build -d
+```
+
+### Laravel Forge (DigitalOcean)
+
+Forge provisions the droplet with nginx already configured. You just need Docker and the container.
+
+#### 1. Provision a server
+
+Create a new server in Forge on DigitalOcean. Choose Ubuntu 24.04 and any size (512 MB RAM is enough for this app). You do **not** need to create a Forge "site" — Ipsumify runs in Docker, not via PHP/Node managed by Forge.
+
+#### 2. Install Docker
+
+SSH into the server (or use Forge's "Run Command" feature):
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker forge
+# Log out and back in, or run: newgrp docker
+```
+
+#### 3. Clone and start the app
+
+```bash
+cd /home/forge
+git clone https://github.com/ICJIA/ipsumify-next-2026.git
+cd ipsumify-next-2026
+docker compose up --build -d
+```
+
+#### 4. Add an nginx site in Forge
+
+In the Forge dashboard:
+
+1. Go to your server and click **New Site**
+2. Enter your domain (e.g. `ipsumify.example.com`)
+3. Set the web directory to `/public` (it won't be used, but Forge requires it)
+4. After the site is created, go to the site's **Nginx** tab and replace the config with:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ipsumify.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name ipsumify.example.com;
+
+    # Forge manages these SSL paths automatically
+    ssl_certificate /etc/nginx/ssl/ipsumify.example.com/server.crt;
+    ssl_certificate_key /etc/nginx/ssl/ipsumify.example.com/server.key;
+
+    location / {
+        proxy_pass http://127.0.0.1:5150;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+5. Click **Install Certificate** (Let's Encrypt) — Forge will handle SSL and auto-renewal
+
+#### 5. Auto-start on reboot
+
+```bash
+sudo systemctl enable docker
+```
+
+Docker's `restart: unless-stopped` policy handles container restarts automatically.
+
+#### Updating via Forge
+
+You can set up a Forge deployment script under the site's **Deployments** tab:
+
+```bash
+cd /home/forge/ipsumify-next-2026
+git pull
+docker compose up --build -d
+```
+
+Then click **Deploy Now** or enable auto-deploy on push.
+
 ## Architecture
 
 - **Hybrid deployment:** Pages are prerendered as static files; the API runs as a serverless function (Netlify Functions via Nitro)

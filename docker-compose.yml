@@ -1,0 +1,9 @@
+services:
+  ipsumify:
+    build: .
+    ports:
+      - "5150:5150"
+    environment:
+      - NODE_ENV=production
+      - PORT=5150
+    restart: unless-stopped
