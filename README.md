@@ -58,10 +58,10 @@ curl https://ipsumify.com/api/generate
 
 ### Examples
 
-**Get 3 blocks of dog-themed text:**
+**Get 10 blocks of classic lorem ipsum:**
 
 ```bash
-curl "https://ipsumify.com/api/generate?theme=dog&blocks=3"
+curl "https://ipsumify.com/api/generate?blocks=10"
 ```
 
 **Get JSON array of individual blocks (useful for populating UI components):**
@@ -98,6 +98,12 @@ curl "https://ipsumify.com/api/generate?lower=1&nowrap=1&blocks=2"
 
 ```bash
 curl "https://ipsumify.com/api/generate?seed=123&blocks=3"
+```
+
+**Get 3 blocks of dog-themed text:**
+
+```bash
+curl "https://ipsumify.com/api/generate?theme=dog&blocks=3"
 ```
 
 ### Parameters
