@@ -19,14 +19,37 @@
 
 https://ipsumify.com
 
+## Table of Contents
+
+- [Features](#features)
+- [Themes](#themes)
+- [API](#api)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration)
+- [Deployment](#deployment)
+  - [Netlify](#netlify-recommended)
+  - [Docker](#docker-self-hosted)
+  - [Nginx Reverse Proxy](#nginx-reverse-proxy)
+  - [DigitalOcean Droplet](#digitalocean-droplet)
+  - [Laravel Forge](#laravel-forge-digitalocean)
+- [Architecture](#architecture)
+- [Accessibility & Quality Scores](#accessibility--quality-scores)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 - **Markdown-Ready Output** - Generate lorem ipsum with headers, code blocks, blockquotes, lists, and links
-- **Multiple Themes** - Choose from classic Lorem Ipsum or fun themed alternatives
+- **Multiple Themes** - Choose from classic Lorem Ipsum or fun themed alternatives (dog, cat, baked, BBQ)
 - **Customizable Blocks** - Control the number of text blocks (1-20)
 - **Formatting Options** - Toggle capitalization and no-wrap mode for cleaner copy-paste
 - **One-Click Actions** - Copy to clipboard or download as `.md` file
-- **Public API** - REST endpoint for generating text via `curl` or server-side code — no API key required
+- **Shareable URLs** - Share your exact settings via URL so others see the same output
+- **Public API** - REST endpoint with multiple output formats (markdown, JSON, text, HTML) — no API key required
+- **Deterministic Output** - Seeded RNG produces identical results for the same parameters, enabling CDN caching
+- **Docker Support** - Self-host on any server with `docker compose up`
 - **Dark Theme** - Beautiful dark UI optimized for developers and designers
 - **Fully Accessible** - 100% Lighthouse accessibility score
 - **SEO Optimized** - Built-in sitemap, robots.txt, and meta tags
