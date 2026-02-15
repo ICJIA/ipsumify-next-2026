@@ -51,6 +51,7 @@ https://ipsumify.com
 - **Public API** - REST endpoint with multiple output formats (markdown, JSON, text, HTML) — no API key required
 - **Deterministic Output** - Seeded RNG produces identical results for the same parameters, enabling CDN caching
 - **Docker Support** - Self-host on any server with `docker compose up`
+- **Keyboard Shortcuts** - Alt+Shift shortcuts for regenerate, copy, and download (Option+Shift on Mac)
 - **Dark Theme** - Beautiful dark UI optimized for developers and designers
 - **Fully Accessible** - 100% Lighthouse accessibility score
 - **SEO Optimized** - Built-in sitemap, robots.txt, and meta tags

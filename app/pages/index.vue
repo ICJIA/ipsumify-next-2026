@@ -293,7 +293,7 @@ useKeyboardShortcuts([
     handler: () => {
       showShortcutsHelp.value = !showShortcutsHelp.value;
     },
-    description: "Toggle shortcuts help",
+    description: "Toggle keyboard shortcuts help",
   },
 ]);
 </script>
@@ -628,13 +628,12 @@ useKeyboardShortcuts([
         class="mx-auto flex max-w-6xl items-center justify-between text-xs text-[#9ca3af]"
       >
         <div class="flex items-center gap-4">
-          <span>Built for Writers and Designers</span>
           <button
             class="flex items-center gap-1 text-[#00d4aa] hover:underline"
             @click="showShortcutsHelp = true"
           >
             <UIcon name="i-lucide-keyboard" class="h-3 w-3" />
-            Shortcuts
+            Keyboard Shortcuts
           </button>
         </div>
         <span class="font-mono">v{{ config.version }}</span>

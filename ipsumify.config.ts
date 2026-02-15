@@ -19,7 +19,7 @@ export const config = {
   title: "Ipsumify - Lorem Ipsum Generator",
   /** @type {string} Long description for meta tags and SEO */
   description:
-    "Generate beautiful lorem ipsum placeholder text with markdown support. Built for writers and designers who need realistic placeholder content.",
+    "Generate beautiful lorem ipsum placeholder text with markdown support.",
   /** @type {string} Short description for Twitter/social cards */
   shortDescription:
     "Generate beautiful lorem ipsum placeholder text with markdown support.",
