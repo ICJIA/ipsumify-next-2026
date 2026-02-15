@@ -643,20 +643,8 @@ useKeyboardShortcuts([
 
     <!-- Keyboard Shortcuts Help Modal -->
     <ClientOnly>
-      <UModal v-model:open="showShortcutsHelp">
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Keyboard Shortcuts</h2>
-              <UButton
-                variant="ghost"
-                icon="i-lucide-x"
-                size="sm"
-                @click="showShortcutsHelp = false"
-              />
-            </div>
-          </template>
-
+      <UModal v-model:open="showShortcutsHelp" title="Keyboard Shortcuts">
+        <template #body>
           <div class="space-y-3">
             <div class="flex items-center justify-between py-2">
               <span class="text-[#d1d5db]">Regenerate text</span>
@@ -683,7 +671,7 @@ useKeyboardShortcuts([
               </kbd>
             </div>
           </div>
-        </UCard>
+        </template>
       </UModal>
     </ClientOnly>
   </div>

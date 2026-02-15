@@ -81,8 +81,10 @@ describe('useLocalStorage', () => {
     // Manually inject bad JSON into the store
     store['bad-json'] = '{invalid json'
 
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const { get } = useLocalStorage('bad-json', 'fallback')
     expect(get()).toBe('fallback')
+    consoleWarn.mockRestore()
   })
 
   it('should handle boolean default values', () => {
