@@ -80,8 +80,7 @@ export default defineNuxtConfig({
         { name: 'msapplication-TileColor', content: config.tileColor }
       ],
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: config.faviconPath },
-        { rel: 'canonical', href: config.url }
+        { rel: 'icon', type: 'image/svg+xml', href: config.faviconPath }
       ]
     }
   }
