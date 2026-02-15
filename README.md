@@ -35,6 +35,7 @@ https://ipsumify.com
   - [DigitalOcean Droplet](#digitalocean-droplet)
   - [Laravel Forge](#laravel-forge-digitalocean)
 - [Architecture](#architecture)
+  - [SEO with ssr: false](#seo-with-ssr-false)
 - [Accessibility & Quality Scores](#accessibility--quality-scores)
 - [Contributing](#contributing)
 - [License](#license)
@@ -551,6 +552,18 @@ Then click **Deploy Now** or enable auto-deploy on push.
 - **Shared generation logic:** Both the web UI and API use `utils/generate.ts` — same code, same output
 - **Deterministic output:** Uses a seeded LCPRNG so identical parameters always produce identical text (enables aggressive CDN caching)
 - **Config hierarchy:** `ipsumify.config.ts` → `nuxt.config.ts`; theme content lives in `data/themes.ts`
+
+### SEO with `ssr: false`
+
+SSR is disabled because reka-ui (used by Nuxt UI v4) crashes during server-side rendering. This means `useSeoMeta()` in page components only runs client-side — crawlers and SEO audit tools see the raw HTML shell without Open Graph, Twitter Card, or canonical tags.
+
+**Solution:** All SEO meta tags are defined explicitly in `app.head` inside `nuxt.config.ts` rather than relying on `useSeoMeta()`. Tags defined in `app.head` are baked into the prerendered HTML at build time, so they're visible to crawlers without JavaScript execution.
+
+If you modify SEO tags, update them in **both** places:
+- `nuxt.config.ts` → `app.head.meta` (for crawlers)
+- `app/pages/index.vue` → `useSeoMeta()` (for client-side SPA navigation)
+
+**Note:** The `@nuxtjs/seo` module's `nuxt-seo-utils` auto-detects files like `og-image.png` in the `public/` directory and injects `og:image` tags with relative paths. To prevent this, ensure `app.head` already includes an `og:image` tag with an absolute URL — the module skips auto-injection when it detects an existing tag.
 
 ## Accessibility & Quality Scores
 
