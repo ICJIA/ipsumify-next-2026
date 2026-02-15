@@ -38,7 +38,13 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
     for (const shortcut of shortcuts) {
       const altShiftPressed = event.altKey && event.shiftKey
       const matchesModifier = shortcut.altShift ? altShiftPressed : true
+      // Match on event.key first, then fall back to event.code for letter
+      // keys. macOS Option+Shift produces special characters (e.g., ‰ for
+      // Option+Shift+R), so event.key won't match the shortcut letter.
+      // event.code reflects the physical key regardless of modifiers.
       const matchesKey = event.key.toLowerCase() === shortcut.key.toLowerCase()
+        || (shortcut.key.length === 1 && /^[a-z]$/i.test(shortcut.key)
+          && event.code === `Key${shortcut.key.toUpperCase()}`)
 
       if (matchesKey && matchesModifier) {
         event.preventDefault()

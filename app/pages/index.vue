@@ -53,6 +53,8 @@ const copyError = ref(false);
 const seed = ref<number>(config.defaultSeed);
 /** Whether keyboard shortcuts help modal is visible */
 const showShortcutsHelp = ref(false);
+/** Shortcut feedback message shown briefly after a shortcut fires */
+const shortcutFeedback = ref("");
 /** Whether share URL was copied successfully */
 const shareCopied = ref(false);
 /** Whether copy format menu is visible */
@@ -268,24 +270,43 @@ const markdownOptions = [
   { key: "links", icon: "i-lucide-link", label: "External links" },
 ];
 
+/** Show a brief feedback message when a keyboard shortcut fires */
+let shortcutFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
+function showShortcutFeedback(message: string) {
+  if (shortcutFeedbackTimer) clearTimeout(shortcutFeedbackTimer);
+  shortcutFeedback.value = message;
+  shortcutFeedbackTimer = setTimeout(() => {
+    shortcutFeedback.value = "";
+  }, COPY_FEEDBACK_DURATION);
+}
+
 /** Keyboard shortcuts for common actions (Alt+Shift to avoid browser conflicts) */
 useKeyboardShortcuts([
   {
     key: "r",
     altShift: true,
-    handler: () => handleRegenerate(),
+    handler: () => {
+      handleRegenerate();
+      showShortcutFeedback("Text regenerated");
+    },
     description: "Regenerate text",
   },
   {
     key: "c",
     altShift: true,
-    handler: () => handleCopy(),
+    handler: () => {
+      handleCopy();
+      showShortcutFeedback("Copied to clipboard");
+    },
     description: "Copy to clipboard",
   },
   {
     key: "d",
     altShift: true,
-    handler: () => handleDownload(),
+    handler: () => {
+      handleDownload();
+      showShortcutFeedback("Downloaded as file");
+    },
     description: "Download as file",
   },
   {
@@ -307,6 +328,18 @@ useKeyboardShortcuts([
     >
       Skip to main content
     </a>
+
+    <!-- Keyboard Shortcut Feedback -->
+    <Transition name="fade">
+      <div
+        v-if="shortcutFeedback"
+        class="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-lg border border-[#333] bg-[#1a1a1a] px-4 py-2 text-sm text-[#00d4aa] shadow-lg"
+        role="status"
+        aria-live="polite"
+      >
+        {{ shortcutFeedback }}
+      </div>
+    </Transition>
 
     <!-- Header -->
     <header class="border-b border-[#1a1a1a] px-6 py-6">
@@ -647,27 +680,37 @@ useKeyboardShortcuts([
           <div class="space-y-3">
             <div class="flex items-center justify-between py-2">
               <span class="text-[#d1d5db]">Regenerate text</span>
-              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
-                {{ isMac ? "⌥⇧" : "Alt+Shift+" }}R
-              </kbd>
+              <div class="flex items-center gap-1">
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">{{ isMac ? "Option" : "Alt" }}</kbd>
+                <span class="text-[#555]">+</span>
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">Shift</kbd>
+                <span class="text-[#555]">+</span>
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">R</kbd>
+              </div>
             </div>
             <div class="flex items-center justify-between py-2">
               <span class="text-[#d1d5db]">Copy to clipboard</span>
-              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
-                {{ isMac ? "⌥⇧" : "Alt+Shift+" }}C
-              </kbd>
+              <div class="flex items-center gap-1">
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">{{ isMac ? "Option" : "Alt" }}</kbd>
+                <span class="text-[#555]">+</span>
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">Shift</kbd>
+                <span class="text-[#555]">+</span>
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">C</kbd>
+              </div>
             </div>
             <div class="flex items-center justify-between py-2">
               <span class="text-[#d1d5db]">Download file</span>
-              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
-                {{ isMac ? "⌥⇧" : "Alt+Shift+" }}D
-              </kbd>
+              <div class="flex items-center gap-1">
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">{{ isMac ? "Option" : "Alt" }}</kbd>
+                <span class="text-[#555]">+</span>
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">Shift</kbd>
+                <span class="text-[#555]">+</span>
+                <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">D</kbd>
+              </div>
             </div>
             <div class="flex items-center justify-between py-2">
               <span class="text-[#d1d5db]">Toggle this help</span>
-              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
-                ?
-              </kbd>
+              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2.5 py-1.5 font-mono text-sm text-[#00d4aa]">?</kbd>
             </div>
           </div>
         </template>

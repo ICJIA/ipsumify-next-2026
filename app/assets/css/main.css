@@ -24,3 +24,14 @@
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #444;
 }
+
+/* Keyboard shortcut feedback transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
