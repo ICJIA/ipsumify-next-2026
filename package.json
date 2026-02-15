@@ -11,19 +11,32 @@
     "typecheck": "nuxt typecheck",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "yarn test:lint && yarn test:types && yarn test:unit",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:lint": "eslint .",
+    "test:types": "nuxt typecheck",
+    "test:all": "yarn test:lint && yarn test:types && yarn test:unit && yarn build"
   },
   "dependencies": {
     "@nuxt/ui": "^4",
     "@nuxtjs/seo": "^3.4.0",
+    "marked": "^17.0.2",
     "nuxt": "^4",
     "tailwindcss": "^4"
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.87",
     "@nuxt/eslint": "1.13.0",
+    "@vitest/ui": "^4.0.18",
+    "@vue/test-utils": "^2.4.6",
     "eslint": "^9",
-    "typescript": "^5"
+    "happy-dom": "^20.6.1",
+    "typescript": "^5",
+    "vitest": "^4.0.18"
   },
   "packageManager": "yarn@1.22.22"
 }

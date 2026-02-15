@@ -32,10 +32,11 @@ export default defineNuxtConfig({
     fallback: 'dark'
   },
 
-  // Static site generation
-  ssr: true,
+  // SSR disabled: reka-ui (used by Nuxt UI v4) crashes during SSR rendering
+  // (ConfigProvider.js null ref in renderSlot). Re-enable when reka-ui fixes SSR support.
+  ssr: false,
   nitro: {
-    preset: 'static'
+    preset: 'netlify'
   },
 
   // Robots configuration

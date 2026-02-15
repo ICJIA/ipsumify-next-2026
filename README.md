@@ -1,5 +1,6 @@
 # Ipsumify
 
+[![CI](https://github.com/ICJIA/ipsumify-next-2026/actions/workflows/ci.yml/badge.svg)](https://github.com/ICJIA/ipsumify-next-2026/actions/workflows/ci.yml)
 [![Nuxt 4](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=flat&logo=nuxt.js&logoColor=white)](https://nuxt.com/)
 [![Nuxt UI](https://img.shields.io/badge/Nuxt_UI-4.x-00DC82?style=flat&logo=nuxt.js&logoColor=white)](https://ui.nuxt.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
@@ -25,6 +26,7 @@ https://ipsumify.com
 - **Customizable Blocks** - Control the number of text blocks (1-20)
 - **Formatting Options** - Toggle capitalization and no-wrap mode for cleaner copy-paste
 - **One-Click Actions** - Copy to clipboard or download as `.md` file
+- **Public API** - REST endpoint for generating text via `curl` or server-side code — no API key required
 - **Dark Theme** - Beautiful dark UI optimized for developers and designers
 - **Fully Accessible** - 100% Lighthouse accessibility score
 - **SEO Optimized** - Built-in sitemap, robots.txt, and meta tags
@@ -43,11 +45,100 @@ Ipsumify includes the classic Lorem Ipsum as the default, plus several fun theme
 
 Switch themes using the dropdown in the Options panel. All your other settings (blocks, markdown elements, formatting) are preserved when switching themes.
 
+## API
+
+Ipsumify includes a public REST API deployed as a Netlify Function. Call it with no parameters for sensible defaults, or customize the output with query parameters.
+
+### Quick Start
+
+```bash
+# Default: 5 blocks of classic lorem ipsum as markdown
+curl https://ipsumify.com/api/generate
+```
+
+### Examples
+
+**Get 3 blocks of dog-themed text:**
+
+```bash
+curl "https://ipsumify.com/api/generate?theme=dog&blocks=3"
+```
+
+**Get JSON array of individual blocks (useful for populating UI components):**
+
+```bash
+curl "https://ipsumify.com/api/generate?format=json&blocks=4"
+```
+
+**Get plain text with no markdown syntax:**
+
+```bash
+curl "https://ipsumify.com/api/generate?format=text&blocks=2"
+```
+
+**Get rendered HTML:**
+
+```bash
+curl "https://ipsumify.com/api/generate?format=html&blocks=3"
+```
+
+**Include markdown elements (headers, code blocks, lists):**
+
+```bash
+curl "https://ipsumify.com/api/generate?md=headers,code,lists&blocks=5"
+```
+
+**Lowercase, single-line output (good for seed data):**
+
+```bash
+curl "https://ipsumify.com/api/generate?lower=1&nowrap=1&blocks=2"
+```
+
+**Deterministic output with a specific seed:**
+
+```bash
+curl "https://ipsumify.com/api/generate?seed=123&blocks=3"
+```
+
+### Parameters
+
+| Parameter | Type   | Default    | Description                                                          |
+| --------- | ------ | ---------- | -------------------------------------------------------------------- |
+| `theme`   | string | `lorem`    | Theme ID: `lorem`, `dog`, `cat`, `baked`, `bbq`                     |
+| `blocks`  | number | `5`        | Number of text blocks (1-20)                                        |
+| `seed`    | number | `42`       | RNG seed for deterministic output                                   |
+| `format`  | string | `markdown` | Response format: `markdown`, `json`, `text`, `html`                 |
+| `md`      | string | _(none)_   | Comma-separated markdown elements: `headers,code,quotes,lists,links` |
+| `lower`   | string | _(off)_    | Set to `1` to disable capitalization                                |
+| `nowrap`  | string | _(off)_    | Set to `1` for single-line output                                   |
+
+### Response Format
+
+All responses return JSON with this structure:
+
+```json
+{
+  "theme": "lorem",
+  "blocks": 5,
+  "seed": 42,
+  "format": "markdown",
+  "output": "..."
+}
+```
+
+The `json` format additionally includes `options` and returns `output` as an array of strings (one per block) plus a `markdown` field with the full text.
+
+### Caching and Fair Use
+
+The API is public with no authentication required. Responses are cached at the CDN edge (`Cache-Control: public, max-age=3600`) since identical parameters always produce identical output. Repeated requests with the same parameters are served from cache without invoking the serverless function.
+
+The API is intended for use with `curl` and server-side code. Cross-origin browser requests (e.g., `fetch` from another domain) are blocked — no CORS headers are sent.
+
 ## Tech Stack
 
 | Technology                                    | Version | Description                                |
 | --------------------------------------------- | ------- | ------------------------------------------ |
-| [Nuxt](https://nuxt.com/)                     | 4.x     | Vue.js meta-framework with SSR/SSG support |
+| [Nuxt](https://nuxt.com/)                     | 4.x     | Vue.js meta-framework                      |
 | [Nuxt UI](https://ui.nuxt.com/)               | 4.x     | Beautiful UI component library             |
 | [Tailwind CSS](https://tailwindcss.com/)      | 4.x     | Utility-first CSS framework                |
 | [TypeScript](https://www.typescriptlang.org/) | 5.x     | Type-safe JavaScript                       |
@@ -94,13 +185,15 @@ Use `yarn lint:fix` to auto-fix ESLint issues where possible.
 | Command            | Description                                     |
 | ------------------ | ----------------------------------------------- |
 | `yarn dev`         | Start development server with hot reload        |
-| `yarn build`       | Build for production (SSR)                      |
-| `yarn generate`    | Generate static site for deployment             |
-| `yarn preview`     | Preview production build locally                |
-| `yarn lint`        | Run ESLint on the codebase                      |
-| `yarn lint:fix`    | Run ESLint with auto-fix                        |
-| `yarn typecheck`   | Run TypeScript type checking                    |
-| `yarn postinstall` | Prepare Nuxt (runs automatically after install) |
+| `yarn build`       | Build for production (hybrid: static pages + serverless API) |
+| `yarn generate`    | Generate fully static site (no serverless functions)         |
+| `yarn preview`     | Preview production build locally                             |
+| `yarn test`        | Run lint, typecheck, and unit tests                          |
+| `yarn test:unit`   | Run Vitest unit tests                                        |
+| `yarn lint`        | Run ESLint on the codebase                                   |
+| `yarn lint:fix`    | Run ESLint with auto-fix                                     |
+| `yarn typecheck`   | Run TypeScript type checking                                 |
+| `yarn postinstall` | Prepare Nuxt (runs automatically after install)              |
 
 ## Project Structure
 
@@ -115,6 +208,20 @@ ipsumify/
 │       └── index.vue       # Main page component
 ├── data/
 │   └── themes.ts           # Theme content (paragraphs, headings, list items)
+├── composables/
+│   ├── useKeyboardShortcuts.ts # Keyboard shortcut handler
+│   ├── useLocalStorage.ts      # Type-safe localStorage wrapper
+│   ├── usePreferences.ts       # User preference persistence
+│   └── useShareUrl.ts          # Shareable URL generation
+├── server/
+│   └── api/
+│       └── generate.get.ts     # GET /api/generate endpoint
+├── utils/
+│   ├── clipboard.ts        # Clipboard utility with fallback
+│   ├── generate.ts         # Shared text generation (web UI + API)
+│   └── random.ts           # Seeded PRNG utilities
+├── tests/
+│   └── unit/               # Vitest unit tests
 ├── documentation/          # Screenshots for README
 ├── public/
 │   ├── icon.svg            # Favicon
@@ -169,31 +276,23 @@ Add a new theme in `data/themes.ts`:
 
 ### Netlify (Recommended)
 
-The project includes a `netlify.toml` configuration for easy deployment:
+The project deploys as a hybrid site on Netlify: pages are prerendered as static files, and the API runs as a Netlify Function.
 
-- **Build command:** `yarn generate`
+- **Build command:** `yarn build`
 - **Publish directory:** `.output/public`
 - **Node version:** 22 (set in `netlify.toml`)
-- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`
+- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, CSP, HSTS
+- **API:** `server/api/` routes are automatically deployed as Netlify Functions
 
 1. Connect your repository to Netlify
 2. Netlify will automatically detect the build settings from `netlify.toml`
 3. Deploy!
 
-### Manual Static Deployment
-
-```bash
-# Generate static files
-yarn generate
-
-# The output will be in .output/public/
-# Deploy this folder to any static hosting service
-```
-
 ## Architecture
 
-- **Static site:** Built with Nitro static preset; the homepage is prerendered at build time
-- **SSR-safe generation:** Uses a seeded LCPRNG so server and client produce identical output (no hydration mismatch)
+- **Hybrid deployment:** Pages are prerendered as static files; the API runs as a serverless function (Netlify Functions via Nitro)
+- **Shared generation logic:** Both the web UI and API use `utils/generate.ts` — same code, same output
+- **Deterministic output:** Uses a seeded LCPRNG so identical parameters always produce identical text (enables aggressive CDN caching)
 - **Config hierarchy:** `ipsumify.config.ts` → `nuxt.config.ts`; theme content lives in `data/themes.ts`
 
 ## Accessibility & Quality Scores

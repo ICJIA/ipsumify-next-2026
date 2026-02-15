@@ -8,6 +8,12 @@
  */
 import config from "../../ipsumify.config";
 import { themes } from "../../data/themes";
+import { generateText } from "../../utils/generate";
+import { usePreferences } from "../../composables/usePreferences";
+import { useKeyboardShortcuts } from "../../composables/useKeyboardShortcuts";
+import { useShareUrl } from "../../composables/useShareUrl";
+import { copyToClipboard } from "../../utils/clipboard";
+import { marked } from "marked";
 
 /** SEO meta tags from ipsumify.config */
 useSeoMeta({
@@ -34,21 +40,35 @@ useSeoMeta({
   themeColor: config.primaryColor,
 });
 
-/** Scroll to top on mount (client-side only, avoids hydration issues) */
-onMounted(() => {
-  if (import.meta.client) {
-    nextTick(() => {
-      window.scrollTo(0, 0);
-    });
-  }
-});
+/** Timeout duration for copy feedback messages (ms) */
+const COPY_FEEDBACK_DURATION = 2000;
 
 /** Number of text blocks to generate (1-20) */
 const blocks = ref<number>(config.defaultBlocks);
 /** Whether copy-to-clipboard succeeded (shows "Copied!" feedback) */
 const copied = ref(false);
+/** Whether copy-to-clipboard failed (shows error feedback) */
+const copyError = ref(false);
 /** RNG seed - fixed initial value for SSR hydration, random on regenerate */
 const seed = ref<number>(config.defaultSeed);
+/** Whether keyboard shortcuts help modal is visible */
+const showShortcutsHelp = ref(false);
+/** Whether share URL was copied successfully */
+const shareCopied = ref(false);
+/** Whether copy format menu is visible */
+const showCopyMenu = ref(false);
+/** Ref for copy menu container (click-outside detection) */
+const copyMenuRef = ref<HTMLElement | null>(null);
+/** Platform detection for keyboard shortcut display */
+const isMac = computed(() => {
+  if (import.meta.server) return false;
+  // Prefer modern userAgentData API, fall back to userAgent string
+  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+  if (nav.userAgentData?.platform) {
+    return nav.userAgentData.platform === "macOS";
+  }
+  return /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+});
 /** Selected theme ID (e.g. lorem, dog, cat) */
 const selectedTheme = ref<string>(config.defaultThemeId);
 
@@ -72,6 +92,45 @@ const options = reactive({
   noWrap: false,
 });
 
+/** Preferences management */
+const { loadPreferences, savePreferences, resetPreferences, DEFAULT_PREFERENCES } = usePreferences();
+
+/** Share URL management */
+const { copyShareUrl, loadFromUrl } = useShareUrl();
+
+/** Scroll to top on mount and load saved preferences (client-side only) */
+onMounted(() => {
+  if (import.meta.client) {
+    window.scrollTo(0, 0);
+
+    // First, try to load from URL parameters (takes priority)
+    const urlPrefs = loadFromUrl(DEFAULT_PREFERENCES);
+
+    // Then load from localStorage (used as fallback)
+    const savedPrefs = loadPreferences();
+
+    // Apply preferences (URL params override localStorage)
+    selectedTheme.value = urlPrefs.theme ?? savedPrefs.theme;
+    blocks.value = urlPrefs.blocks ?? savedPrefs.blocks;
+    Object.assign(options, savedPrefs.options, urlPrefs.options ?? {});
+  }
+});
+
+/** Auto-save preferences when they change (watcher registered synchronously for proper cleanup) */
+if (import.meta.client) {
+  watch(
+    [selectedTheme, blocks, () => options],
+    () => {
+      savePreferences({
+        theme: selectedTheme.value,
+        blocks: blocks.value,
+        options: { ...options },
+      });
+    },
+    { deep: true }
+  );
+}
+
 /** Resolved theme object for the selected theme ID */
 const currentTheme = computed(() => {
   return themes.find((t) => t.id === selectedTheme.value) ?? themes[0]!;
@@ -86,177 +145,14 @@ const themeOptions = computed(() => {
   }));
 });
 
-/**
- * Creates a seeded random number generator (LCPRNG).
- * Deterministic output for same seed - enables SSR-safe generation.
- *
- * @param seedValue - Initial seed
- * @returns Object with next() (0-1 float) and nextInt(min, max) (inclusive)
- */
-function seededRandom(seedValue: number): {
-  next: () => number;
-  nextInt: (min: number, max: number) => number;
-} {
-  let currentSeed = seedValue;
-  return {
-    next: () => {
-      currentSeed = (currentSeed * 9301 + 49297) % 233280;
-      return currentSeed / 233280;
-    },
-    nextInt: (min: number, max: number) => {
-      currentSeed = (currentSeed * 9301 + 49297) % 233280;
-      return Math.floor((currentSeed / 233280) * (max - min + 1)) + min;
-    },
-  };
-}
-
-/**
- * Shuffles an array deterministically using a seed.
- * Fisher-Yates with seeded RNG - same seed produces same order.
- *
- * @param array - Strings to shuffle (not mutated)
- * @param seedValue - Seed for reproducible shuffle
- * @returns New shuffled array
- */
-function shuffleWithSeed(array: string[], seedValue: number): string[] {
-  const shuffled = [...array];
-  const rng = seededRandom(seedValue);
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(rng.next() * (i + 1));
-    const temp = shuffled[i]!;
-    shuffled[i] = shuffled[j]!;
-    shuffled[j] = temp;
-  }
-  return shuffled;
-}
-
-/** Generated lorem ipsum text with optional markdown (headers, code, blockquotes, lists, links) */
+/** Generated lorem ipsum text with optional markdown */
 const generatedText = computed(() => {
-  const theme = currentTheme.value;
-  const paragraphs = shuffleWithSeed(theme.paragraphs, seed.value);
-  const headings = shuffleWithSeed(theme.headings, seed.value + 500);
-  const listItems = theme.listItems;
-  const rng = seededRandom(seed.value + 1000); // Different seed for block sizes
-  const blockSeparator = options.noWrap ? " " : "\n\n";
-  let output = "";
-  let paragraphIndex = 0;
-  let headingIndex = 0;
-  let currentHeadingLevel = 1; // Start at H1
-  let blocksUntilNextHeading = 0; // Counter for skipping blocks
-
-  // Helper to get next heading text
-  const getNextHeading = (): string => {
-    const text = headings[headingIndex % headings.length] ?? "Section";
-    headingIndex++;
-    return options.capitalize ? text : text.toLowerCase();
-  };
-
-  // Helper to generate heading markdown
-  const makeHeading = (level: number, text: string) => {
-    const hashes = "#".repeat(level);
-    if (options.noWrap) {
-      return `${hashes} ${text} `;
-    }
-    return `${hashes} ${text}\n\n`;
-  };
-
-  for (let i = 0; i < blocks.value; i++) {
-    // Random block size: 1-3 sentences
-    const blockSize = rng.nextInt(1, 3);
-    let blockContent = "";
-
-    for (let j = 0; j < blockSize; j++) {
-      const rawSentence = paragraphs[paragraphIndex % paragraphs.length] ?? "";
-      paragraphIndex++;
-
-      // Apply capitalize option
-      const sentence = options.capitalize
-        ? rawSentence
-        : rawSentence.toLowerCase();
-
-      blockContent += sentence + " ";
-    }
-
-    blockContent = blockContent.trim();
-
-    // Header logic with hierarchy
-    if (options.headers) {
-      if (i === 0) {
-        // Always start with H1
-        output += makeHeading(1, getNextHeading());
-        currentHeadingLevel = 2;
-        blocksUntilNextHeading = rng.nextInt(1, 3); // Skip 1-3 blocks before next heading
-      } else if (blocksUntilNextHeading <= 0) {
-        // Time for a new heading
-        // Randomly decide: go deeper, stay same, or go up
-        const decision = rng.nextInt(1, 10);
-        if (decision <= 3 && currentHeadingLevel < 4) {
-          // 30% chance: go deeper (max H4)
-          currentHeadingLevel++;
-        } else if (decision <= 5 && currentHeadingLevel > 2) {
-          // 20% chance: go up one level (min H2)
-          currentHeadingLevel--;
-        } else if (decision <= 7 && currentHeadingLevel > 2) {
-          // 20% chance: reset to H2
-          currentHeadingLevel = 2;
-        }
-        // 30% chance: stay at same level
-
-        output += makeHeading(currentHeadingLevel, getNextHeading());
-        blocksUntilNextHeading = rng.nextInt(1, 4); // Skip 1-4 blocks before next heading
-      } else {
-        blocksUntilNextHeading--;
-      }
-    }
-
-    if (options.codeSnippets && i % 3 === 0) {
-      if (options.noWrap) {
-        output += `\`const example = 'code';\` `;
-      } else {
-        output += "```javascript\nconst example = 'code';\n```\n\n";
-      }
-    }
-    if (options.blockquotes && i % 2 === 1) {
-      if (options.noWrap) {
-        output += `> ${blockContent.slice(0, 100)}... `;
-      } else {
-        output += `> ${blockContent.slice(0, 100)}...\n\n`;
-      }
-    }
-    if (options.lists && i % 3 === 2) {
-      if (options.noWrap) {
-        const items = listItems
-          .map((item) => `• ${options.capitalize ? item : item.toLowerCase()}`)
-          .join(" ");
-        output += items + " ";
-      } else {
-        const items = listItems
-          .map((item) => `- ${options.capitalize ? item : item.toLowerCase()}`)
-          .join("\n");
-        output += items + "\n\n";
-      }
-    }
-    if (options.links && i % 4 === 0) {
-      const linkText = options.capitalize ? "Learn more" : "learn more";
-      output += `[${linkText}](https://example.com) `;
-    }
-    output += blockContent + blockSeparator;
-  }
-
-  // Remove trailing separator and clean up for noWrap mode
-  if (options.noWrap) {
-    // Remove any <br> tags that might have been introduced
-    output = output.replace(/<br\s*\/?>/gi, " ");
-    // Replace any remaining newlines with spaces
-    output = output.replace(/\n+/g, " ");
-    // Collapse multiple spaces into one
-    output = output.replace(/\s+/g, " ");
-    output = output.trim();
-  } else if (output.endsWith("\n\n")) {
-    output = output.slice(0, -2);
-  }
-
-  return output;
+  return generateText({
+    theme: currentTheme.value,
+    blocks: blocks.value,
+    seed: seed.value,
+    options: { ...options },
+  });
 });
 
 /** Picks a new random seed to regenerate output with different content */
@@ -266,29 +162,40 @@ function handleRegenerate() {
 
 /** Resets all options and state to ipsumify.config defaults, scrolls to top */
 function handleReset() {
-  // Reset all settings to defaults (from ipsumify.config)
   blocks.value = config.defaultBlocks;
   seed.value = config.defaultSeed;
   selectedTheme.value = config.defaultThemeId;
-  options.headers = false;
-  options.codeSnippets = false;
-  options.blockquotes = false;
-  options.lists = false;
-  options.links = false;
-  options.capitalize = true;
-  options.noWrap = false;
+  Object.assign(options, DEFAULT_PREFERENCES.options);
+  resetPreferences();
 
-  // Scroll to top
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (import.meta.client) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 /** Copies generated text to clipboard and shows "Copied!" for 2s */
-async function handleCopy() {
-  await navigator.clipboard.writeText(generatedText.value);
-  copied.value = true;
-  setTimeout(() => {
-    copied.value = false;
-  }, 2000);
+async function handleCopy(format: 'markdown' | 'html' = 'markdown') {
+  try {
+    let textToCopy = generatedText.value;
+
+    if (format === 'html') {
+      textToCopy = await marked(generatedText.value);
+    }
+
+    await copyToClipboard(textToCopy);
+    copied.value = true;
+    copyError.value = false;
+
+    setTimeout(() => {
+      copied.value = false;
+    }, COPY_FEEDBACK_DURATION);
+  } catch (error) {
+    console.error("Failed to copy text:", error);
+    copyError.value = true;
+    setTimeout(() => {
+      copyError.value = false;
+    }, COPY_FEEDBACK_DURATION);
+  }
 }
 
 /** Downloads generated text as output.md file */
@@ -299,9 +206,54 @@ function handleDownload() {
   a.href = url;
   a.download = "output.md";
   document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  try {
+    a.click();
+  } finally {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** Copies in the given format and closes the menu */
+async function handleCopyAndClose(format: 'markdown' | 'html') {
+  showCopyMenu.value = false;
+  await handleCopy(format);
+}
+
+/** Close copy menu on outside click */
+function handleClickOutside(event: MouseEvent) {
+  if (copyMenuRef.value && !copyMenuRef.value.contains(event.target as Node)) {
+    showCopyMenu.value = false;
+  }
+}
+
+onMounted(() => {
+  if (import.meta.client) {
+    document.addEventListener("click", handleClickOutside);
+  }
+});
+
+onUnmounted(() => {
+  if (import.meta.client) {
+    document.removeEventListener("click", handleClickOutside);
+  }
+});
+
+/** Copies shareable URL with current settings to clipboard */
+async function handleShareUrl() {
+  try {
+    await copyShareUrl({
+      theme: selectedTheme.value,
+      blocks: blocks.value,
+      options: { ...options },
+    });
+    shareCopied.value = true;
+    setTimeout(() => {
+      shareCopied.value = false;
+    }, COPY_FEEDBACK_DURATION);
+  } catch (error) {
+    console.error("Failed to copy share URL:", error);
+  }
 }
 
 /**
@@ -315,6 +267,35 @@ const markdownOptions = [
   { key: "lists", icon: "i-lucide-list", label: "Lists" },
   { key: "links", icon: "i-lucide-link", label: "External links" },
 ];
+
+/** Keyboard shortcuts for common actions (Alt+Shift to avoid browser conflicts) */
+useKeyboardShortcuts([
+  {
+    key: "r",
+    altShift: true,
+    handler: () => handleRegenerate(),
+    description: "Regenerate text",
+  },
+  {
+    key: "c",
+    altShift: true,
+    handler: () => handleCopy(),
+    description: "Copy to clipboard",
+  },
+  {
+    key: "d",
+    altShift: true,
+    handler: () => handleDownload(),
+    description: "Download as file",
+  },
+  {
+    key: "?",
+    handler: () => {
+      showShortcutsHelp.value = !showShortcutsHelp.value;
+    },
+    description: "Toggle shortcuts help",
+  },
+]);
 </script>
 
 <template>
@@ -418,15 +399,28 @@ const markdownOptions = [
                 />
                 <span>Theme</span>
               </label>
-              <USelect
-                v-model="selectedTheme"
-                :items="themeOptions"
-                value-key="value"
-                class="w-full"
-                size="md"
-                color="primary"
-                aria-labelledby="theme-label"
-              />
+              <ClientOnly>
+                <USelect
+                  v-model="selectedTheme"
+                  :items="themeOptions"
+                  value-key="value"
+                  class="w-full"
+                  size="md"
+                  color="primary"
+                  aria-labelledby="theme-label"
+                />
+                <template #fallback>
+                  <select
+                    v-model="selectedTheme"
+                    class="w-full rounded border border-[#333] bg-[#1a1a1a] px-3 py-2 text-[#d1d5db]"
+                    aria-labelledby="theme-label"
+                  >
+                    <option v-for="option in themeOptions" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                </template>
+              </ClientOnly>
             </div>
 
             <!-- Blocks Slider -->
@@ -522,8 +516,8 @@ const markdownOptions = [
               </div>
             </div>
 
-            <!-- Regenerate Button -->
-            <div class="pt-4">
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-4">
               <UButton
                 block
                 color="primary"
@@ -533,6 +527,17 @@ const markdownOptions = [
                 @click="handleRegenerate"
               >
                 Regenerate
+              </UButton>
+              <UButton
+                block
+                variant="outline"
+                :icon="shareCopied ? 'i-lucide-check' : 'i-lucide-share-2'"
+                :aria-label="shareCopied ? 'Share URL copied!' : 'Copy shareable URL with current settings'"
+                @click="handleShareUrl"
+              >
+                <span :class="shareCopied ? 'text-[#00d4aa]' : ''">
+                  {{ shareCopied ? "URL Copied!" : "Share Settings" }}
+                </span>
               </UButton>
             </div>
           </div>
@@ -565,20 +570,42 @@ const markdownOptions = [
                 aria-hidden="true"
               />
             </button>
-            <UButton
-              variant="ghost"
-              size="sm"
-              :icon="copied ? 'i-lucide-check' : 'i-lucide-copy'"
-              class="gap-2 text-[#d1d5db] hover:bg-[#1a1a1a] hover:text-[#fafafa]"
-              :aria-label="
-                copied ? 'Text copied to clipboard' : 'Copy text to clipboard'
-              "
-              @click="handleCopy"
-            >
-              <span :class="copied ? 'text-[#00d4aa]' : ''">
-                {{ copied ? "Copied!" : "Copy" }}
-              </span>
-            </UButton>
+            <div ref="copyMenuRef" class="relative">
+              <UButton
+                variant="ghost"
+                size="sm"
+                :icon="copied ? 'i-lucide-check' : copyError ? 'i-lucide-x' : 'i-lucide-copy'"
+                trailing-icon="i-lucide-chevron-down"
+                class="gap-2 text-[#d1d5db] hover:bg-[#1a1a1a] hover:text-[#fafafa]"
+                :aria-label="
+                  copied ? 'Text copied to clipboard' : copyError ? 'Failed to copy' : 'Copy text to clipboard'
+                "
+                @click="showCopyMenu = !showCopyMenu"
+              >
+                <span :class="copied ? 'text-[#00d4aa]' : copyError ? 'text-red-400' : ''">
+                  {{ copied ? "Copied!" : copyError ? "Failed" : "Copy" }}
+                </span>
+              </UButton>
+              <div
+                v-show="showCopyMenu"
+                class="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[#333] bg-[#1a1a1a] py-1 shadow-xl"
+              >
+                <button
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#d1d5db] hover:bg-[#333] hover:text-[#fafafa]"
+                  @click="handleCopyAndClose('markdown')"
+                >
+                  <UIcon name="i-lucide-file-text" class="h-4 w-4" aria-hidden="true" />
+                  Copy as Markdown
+                </button>
+                <button
+                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#d1d5db] hover:bg-[#333] hover:text-[#fafafa]"
+                  @click="handleCopyAndClose('html')"
+                >
+                  <UIcon name="i-lucide-code" class="h-4 w-4" aria-hidden="true" />
+                  Copy as HTML
+                </button>
+              </div>
+            </div>
           </div>
           <div
             class="flex-1 overflow-auto p-4"
@@ -600,9 +627,64 @@ const markdownOptions = [
       <div
         class="mx-auto flex max-w-6xl items-center justify-between text-xs text-[#9ca3af]"
       >
-        <span>Built for Writers and Designers</span>
+        <div class="flex items-center gap-4">
+          <span>Built for Writers and Designers</span>
+          <button
+            class="flex items-center gap-1 text-[#00d4aa] hover:underline"
+            @click="showShortcutsHelp = true"
+          >
+            <UIcon name="i-lucide-keyboard" class="h-3 w-3" />
+            Shortcuts
+          </button>
+        </div>
         <span class="font-mono">v{{ config.version }}</span>
       </div>
     </footer>
+
+    <!-- Keyboard Shortcuts Help Modal -->
+    <ClientOnly>
+      <UModal v-model:open="showShortcutsHelp">
+        <UCard>
+          <template #header>
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold">Keyboard Shortcuts</h2>
+              <UButton
+                variant="ghost"
+                icon="i-lucide-x"
+                size="sm"
+                @click="showShortcutsHelp = false"
+              />
+            </div>
+          </template>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between py-2">
+              <span class="text-[#d1d5db]">Regenerate text</span>
+              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
+                {{ isMac ? "⌥⇧" : "Alt+Shift+" }}R
+              </kbd>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <span class="text-[#d1d5db]">Copy to clipboard</span>
+              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
+                {{ isMac ? "⌥⇧" : "Alt+Shift+" }}C
+              </kbd>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <span class="text-[#d1d5db]">Download file</span>
+              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
+                {{ isMac ? "⌥⇧" : "Alt+Shift+" }}D
+              </kbd>
+            </div>
+            <div class="flex items-center justify-between py-2">
+              <span class="text-[#d1d5db]">Toggle this help</span>
+              <kbd class="rounded border border-[#333] bg-[#1a1a1a] px-2 py-1 font-mono text-xs text-[#00d4aa]">
+                ?
+              </kbd>
+            </div>
+          </div>
+        </UCard>
+      </UModal>
+    </ClientOnly>
   </div>
 </template>

@@ -1,5 +1,5 @@
 [build]
-command = "yarn generate"
+command = "yarn build"
 publish = ".output/public"
 
 [build.environment]
@@ -8,6 +8,18 @@ NODE_VERSION = "22"
 [[headers]]
 for = "/*"
 [headers.values]
+# Prevent clickjacking attacks
 X-Frame-Options = "DENY"
+# Prevent MIME type sniffing
 X-Content-Type-Options = "nosniff"
+# Control referrer information
 Referrer-Policy = "strict-origin-when-cross-origin"
+# XSS protection for legacy browsers
+X-XSS-Protection = "1; mode=block"
+# Restrict browser features and APIs
+Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+# Force HTTPS connections
+Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+# Content Security Policy
+# unsafe-inline required for Nuxt/Vue inline scripts and styles at build time
+Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
