@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.87",
-    "@nuxt/eslint": "1.13.0",
+    "@nuxt/eslint": "1.15.1",
     "@vitest/coverage-v8": "^4.0.18",
     "@vitest/ui": "^4.0.18",
     "@vue/test-utils": "^2.4.6",
