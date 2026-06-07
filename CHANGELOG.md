@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Accessibility (WCAG 2.5.3 Label in Name): the logo/reset button and the Share Settings button now include their visible text in their accessible names, so speech-input users can activate them by name
+- SEO: force an absolute `rel=canonical` on the client. With `ssr: false`, @nuxtjs/seo emitted a relative path ("/"), which Lighthouse flagged as an invalid canonical (Lighthouse SEO 92 → 100)
 
 ## [2.1.0] - 2026-02-15
 

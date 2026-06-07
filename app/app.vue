@@ -5,6 +5,18 @@
  * Sets global HTML attributes (lang, dark class) and body styles (antialiased).
  * Renders NuxtPage with UApp wrapper (toaster disabled).
  */
+import config from "../ipsumify.config";
+
+const route = useRoute();
+
+/**
+ * Absolute canonical URL. With `ssr: false`, @nuxtjs/seo's automatic canonical
+ * resolves to a relative path ("/") on the client (its site-URL resolver returns
+ * empty), which Lighthouse flags as an invalid canonical. This high-priority entry
+ * wins unhead's dedupe so the rendered canonical stays absolute.
+ */
+const canonicalHref = computed(() => new URL(route.path, config.url).href);
+
 useHead({
   htmlAttrs: {
     lang: "en",
@@ -13,6 +25,7 @@ useHead({
   bodyAttrs: {
     class: "antialiased",
   },
+  link: [{ rel: "canonical", href: canonicalHref, tagPriority: "high" }],
 });
 </script>
 
