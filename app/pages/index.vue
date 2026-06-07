@@ -346,7 +346,7 @@ useKeyboardShortcuts([
       <div class="mx-auto flex max-w-6xl items-center justify-between">
         <button
           class="flex cursor-pointer items-center gap-4 transition-opacity hover:opacity-80"
-          aria-label="Reset to defaults and scroll to top"
+          aria-label="Ipsumify — reset to defaults and scroll to top"
           @click="handleReset"
         >
           <UIcon
@@ -565,7 +565,7 @@ useKeyboardShortcuts([
                 block
                 variant="outline"
                 :icon="shareCopied ? 'i-lucide-check' : 'i-lucide-share-2'"
-                :aria-label="shareCopied ? 'Share URL copied!' : 'Copy shareable URL with current settings'"
+                :aria-label="shareCopied ? 'URL Copied! Shareable link copied to clipboard' : 'Share Settings — copy a shareable URL with your current options'"
                 @click="handleShareUrl"
               >
                 <span :class="shareCopied ? 'text-[#00d4aa]' : ''">
