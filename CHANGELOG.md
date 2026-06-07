@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- JSON-LD structured data (`WebApplication` schema) in the prerendered HTML — includes author, publisher, offers, `datePublished`/`dateModified`, and a feature list for search engines and AI systems
+- `<meta name="author">` tag for content attribution
+- `public/llms.txt` describing the site and public API for LLM consumption (per the llmstxt.org spec)
+- `datePublished` and `dateModified` fields in `ipsumify.config.ts` to signal content freshness
+
+### Changed
+- Expanded the meta description from 70 to 131 characters for richer AI and search-engine summaries
+
 ## [2.1.0] - 2026-02-15
 
 ### Added

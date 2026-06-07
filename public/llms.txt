@@ -1,0 +1,38 @@
+# Ipsumify
+
+> The friendliest lorem ipsum generator around. Generate beautiful placeholder text with markdown support, themed variants, and a free public API — no signup required.
+
+Ipsumify is a free, open-source web app for designers, writers, and developers who need placeholder text. Output is deterministic: the same parameters and seed always produce identical text, so results are safe to cache and easy to share. Every result the UI can produce is also available from a public REST API that needs no API key.
+
+## Features
+
+- Markdown-ready output: headers, code blocks, blockquotes, lists, and links
+- Multiple themes: Lorem Ipsum (classic), Dog-em, Cat-em, Baked-em, and BBQ-em — all Latin-style placeholder text
+- Customizable block count (1–20), optional capitalization, and a no-wrap mode for clean copy-paste
+- One-click copy to clipboard or download as a `.md` file
+- Shareable URLs that encode your exact settings so others see the same output
+- Deterministic, seeded output that is friendly to CDN caching
+
+## API
+
+The public REST API requires no API key. Base endpoint: `https://ipsumify.com/api/generate`
+
+- Default (5 blocks, markdown): https://ipsumify.com/api/generate
+- Choose how many blocks: https://ipsumify.com/api/generate?blocks=10
+- JSON array of individual blocks: https://ipsumify.com/api/generate?format=json&blocks=4
+- Plain text, no markdown: https://ipsumify.com/api/generate?format=text&blocks=2
+- Rendered HTML: https://ipsumify.com/api/generate?format=html&blocks=3
+- Include markdown elements: https://ipsumify.com/api/generate?md=headers,code,lists&blocks=5
+
+Output formats: `markdown` (default), `json`, `text`, `html`. Themes: `lorem`, `dog`, `cat`, `baked`, `bbq`.
+
+## Documentation
+
+- [Ipsumify app](https://ipsumify.com): The web-based generator
+- [Source code & documentation](https://github.com/ICJIA/ipsumify-next-2026): GitHub repository and full README, including API and deployment guides
+- [License](https://github.com/ICJIA/ipsumify-next-2026/blob/main/LICENSE): MIT License
+
+## Optional
+
+- [Changelog](https://github.com/ICJIA/ipsumify-next-2026/blob/main/CHANGELOG.md): Release history and notable changes
+- [Contributing guide](https://github.com/ICJIA/ipsumify-next-2026/blob/main/CONTRIBUTING.md): How to contribute

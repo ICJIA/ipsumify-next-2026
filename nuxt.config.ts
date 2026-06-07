@@ -76,6 +76,7 @@ export default defineNuxtConfig({
       title: config.title,
       meta: [
         { name: 'description', content: config.shortDescription },
+        { name: 'author', content: config.author },
         { name: 'theme-color', content: config.primaryColor },
         { name: 'msapplication-TileColor', content: config.tileColor },
         { property: 'og:title', content: config.title },
@@ -91,6 +92,52 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: config.faviconPath },
         { rel: 'canonical', href: config.url }
+      ],
+      script: [
+        {
+          // WebApplication structured data for search engines and AI systems.
+          // Defined here (app.head) so it lands in the prerendered HTML despite ssr: false.
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: config.name,
+            url: config.url,
+            description: config.shortDescription,
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'Any (web browser)',
+            browserRequirements: 'Requires JavaScript',
+            softwareVersion: config.version,
+            image: config.ogImageUrl,
+            inLanguage: config.defaultLocale,
+            isAccessibleForFree: true,
+            datePublished: config.datePublished,
+            dateModified: config.dateModified,
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD'
+            },
+            author: {
+              '@type': 'Organization',
+              name: config.author,
+              url: config.github
+            },
+            publisher: {
+              '@type': 'Organization',
+              name: config.author,
+              url: config.github
+            },
+            featureList: [
+              'Markdown-ready output: headers, code blocks, blockquotes, lists, and links',
+              'Multiple themes: Lorem Ipsum, Dog, Cat, Baked, and BBQ',
+              'Customizable block count, capitalization, and no-wrap mode',
+              'One-click copy to clipboard or download as a Markdown file',
+              'Shareable URLs that encode your exact settings',
+              'Free public REST API with markdown, JSON, text, and HTML output'
+            ]
+          })
+        }
       ]
     }
   }

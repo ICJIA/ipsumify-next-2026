@@ -19,10 +19,10 @@ export const config = {
   title: "Ipsumify - Lorem Ipsum Generator",
   /** @type {string} Long description for meta tags and SEO */
   description:
-    "Generate beautiful lorem ipsum placeholder text with markdown support.",
+    "Generate beautiful lorem ipsum placeholder text with markdown support, themed variants, and a free public API — no signup required.",
   /** @type {string} Short description for Twitter/social cards */
   shortDescription:
-    "Generate beautiful lorem ipsum placeholder text with markdown support.",
+    "Generate beautiful lorem ipsum placeholder text with markdown support, themed variants, and a free public API — no signup required.",
 
   /** @type {string} Canonical site URL */
   url: "https://ipsumify.com",
@@ -31,6 +31,10 @@ export const config = {
 
   /** @type {string} Author/organization name */
   author: "ICJIA",
+  /** @type {string} ISO 8601 date first published (for JSON-LD / SEO freshness) */
+  datePublished: "2026-02-15",
+  /** @type {string} ISO 8601 date the page/metadata was last updated */
+  dateModified: "2026-06-07",
   /** @type {string} BCP 47 locale (e.g. en_US) */
   locale: "en_US",
   /** @type {string} Default locale for SEO (e.g. en) */
