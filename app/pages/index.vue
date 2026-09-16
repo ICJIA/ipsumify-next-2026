@@ -216,6 +216,11 @@ function handleDownload() {
   }
 }
 
+/** Opens or closes the copy menu */
+function toggleCopyMenu() {
+  showCopyMenu.value = !showCopyMenu.value;
+}
+
 /** Copies in the given format and closes the menu */
 async function handleCopyAndClose(format: 'markdown' | 'html') {
   showCopyMenu.value = false;
@@ -613,7 +618,7 @@ useKeyboardShortcuts([
                 :aria-label="
                   copied ? 'Text copied to clipboard' : copyError ? 'Failed to copy' : 'Copy text to clipboard'
                 "
-                @click="showCopyMenu = !showCopyMenu"
+                @click="toggleCopyMenu"
               >
                 <span :class="copied ? 'text-[#00d4aa]' : copyError ? 'text-red-400' : ''">
                   {{ copied ? "Copied!" : copyError ? "Failed" : "Copy" }}

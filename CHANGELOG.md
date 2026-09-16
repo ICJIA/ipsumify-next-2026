@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-09-16
+
+### Fixed
+- **CI has failed on every push since 2026-09-15; `vue-tsc` is now a devDependency.** It was declared nowhere, so `nuxt typecheck` fetched whatever npm's latest was through `npx`. That is now vue-tsc 3.3.11, which accepts any TypeScript from 5.0 up and so is paired with TypeScript 7.0.2 — whose exports map no longer includes `typescript/lib/tsc`, the path vue-tsc loads. The typecheck crashed before checking a line. Declared in `package.json` and locked in `yarn.lock`, it now runs against the project's own TypeScript 5.9.3, the same on every machine and in CI.
+- **The type error the working check then found.** The Copy button's `@click="showCopyMenu = !showCopyMenu"` compiles to a handler that returns a boolean, and Nuxt UI's `UButton` types `onClick` as returning nothing. It is now a `toggleCopyMenu()` function. Behavior is unchanged — Vue ignores a handler's return value — and was checked in a browser: the menu opens, closes, and closes on an outside click.
+
 ## [2.3.0] - 2026-09-16
 
 ### Removed
@@ -85,7 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.1...HEAD
+[2.3.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.0.0...v2.1.0
