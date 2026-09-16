@@ -168,10 +168,10 @@ Ipsumify has two URL formats that serve different purposes:
 |---|---|---|
 | **URL** | `https://ipsumify.com/?theme=dog&blocks=3` | `https://ipsumify.com/api/generate?theme=dog&blocks=3` |
 | **Returns** | HTML page (the web app with settings pre-filled) | JSON with generated text |
-| **Use case** | Share a link so someone sees the same settings in their browser | Programmatically retrieve generated text |
+| **Use case** | Share a link so someone sees the same text in their browser | Programmatically retrieve generated text |
 | **curl/fetch** | Returns the full HTML page — not useful for text extraction | Returns structured JSON — designed for this |
 
-The share URL and API accept the same query parameters (`theme`, `blocks`, `md`, `lower`, `nowrap`). The API additionally accepts `format` and `seed`.
+The share URL and API accept the same query parameters (`theme`, `blocks`, `md`, `lower`, `nowrap`, `seed`). The API additionally accepts `format`. Share Settings always writes the current `seed` into the link, so a link made after Regenerate reproduces the regenerated text.
 
 ## Tech Stack
 

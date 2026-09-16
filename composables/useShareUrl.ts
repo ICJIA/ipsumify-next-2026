@@ -11,12 +11,21 @@ import { copyToClipboard } from '../utils/clipboard'
 const VALID_THEME_IDS = new Set(themes.map(t => t.id))
 
 /**
+ * Largest seed a share link accepts. Negative seeds send the generator's
+ * indexes below zero (empty output), and past this the arithmetic is no
+ * longer guaranteed exact.
+ */
+const MAX_SHARE_SEED = 2_147_483_647
+
+/**
  * Encodes user preferences into URL search parameters.
  *
  * @param preferences - The user preferences to encode
+ * @param seed - The RNG seed behind the text on screen, so the link reproduces
+ *   those exact words rather than the default seed's
  * @returns URLSearchParams with encoded preferences
  */
-export function encodePreferencesToUrl(preferences: UserPreferences): URLSearchParams {
+export function encodePreferencesToUrl(preferences: UserPreferences, seed?: number): URLSearchParams {
   const params = new URLSearchParams()
 
   // Add theme
@@ -45,7 +54,27 @@ export function encodePreferencesToUrl(preferences: UserPreferences): URLSearchP
     params.set('nowrap', '1')
   }
 
+  // Add seed
+  if (seed !== undefined) {
+    params.set('seed', seed.toString())
+  }
+
   return params
+}
+
+/**
+ * Decodes the RNG seed from URL search parameters.
+ *
+ * @param params - URL search parameters to decode
+ * @returns The seed, or undefined when absent or not a whole number from 0 to MAX_SHARE_SEED
+ */
+export function decodeSeedFromUrl(params: URLSearchParams): number | undefined {
+  const seed = params.get('seed')
+  if (seed === null || !/^\d+$/.test(seed)) {
+    return undefined
+  }
+  const seedNum = Number(seed)
+  return seedNum <= MAX_SHARE_SEED ? seedNum : undefined
 }
 
 /**
@@ -116,14 +145,15 @@ export function useShareUrl() {
    * Generates a shareable URL with encoded preferences.
    *
    * @param preferences - User preferences to encode
+   * @param seed - RNG seed behind the text on screen
    * @returns Full shareable URL
    */
-  function generateShareUrl(preferences: UserPreferences): string {
+  function generateShareUrl(preferences: UserPreferences, seed?: number): string {
     if (import.meta.server) {
       return ''
     }
 
-    const params = encodePreferencesToUrl(preferences)
+    const params = encodePreferencesToUrl(preferences, seed)
     const url = new URL(window.location.href)
     url.search = params.toString()
     return url.toString()
@@ -133,10 +163,11 @@ export function useShareUrl() {
    * Copies the shareable URL to clipboard.
    *
    * @param preferences - User preferences to encode
+   * @param seed - RNG seed behind the text on screen
    * @returns Promise that resolves when copied
    */
-  async function copyShareUrl(preferences: UserPreferences): Promise<void> {
-    const url = generateShareUrl(preferences)
+  async function copyShareUrl(preferences: UserPreferences, seed?: number): Promise<void> {
+    const url = generateShareUrl(preferences, seed)
     await copyToClipboard(url)
   }
 
@@ -155,9 +186,23 @@ export function useShareUrl() {
     return decodePreferencesFromUrl(params, defaultPreferences)
   }
 
+  /**
+   * Loads the RNG seed from the current URL if present.
+   *
+   * @returns The seed from the URL, or undefined
+   */
+  function loadSeedFromUrl(): number | undefined {
+    if (import.meta.server) {
+      return undefined
+    }
+
+    return decodeSeedFromUrl(new URLSearchParams(window.location.search))
+  }
+
   return {
     generateShareUrl,
     copyShareUrl,
     loadFromUrl,
+    loadSeedFromUrl,
   }
 }

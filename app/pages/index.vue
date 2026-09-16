@@ -98,7 +98,7 @@ const options = reactive({
 const { loadPreferences, savePreferences, resetPreferences, DEFAULT_PREFERENCES } = usePreferences();
 
 /** Share URL management */
-const { copyShareUrl, loadFromUrl } = useShareUrl();
+const { copyShareUrl, loadFromUrl, loadSeedFromUrl } = useShareUrl();
 
 /** Scroll to top on mount and load saved preferences (client-side only) */
 onMounted(() => {
@@ -107,6 +107,12 @@ onMounted(() => {
 
     // First, try to load from URL parameters (takes priority)
     const urlPrefs = loadFromUrl(DEFAULT_PREFERENCES);
+
+    // A shared link carries the seed, so the recipient sees the sender's exact text
+    const urlSeed = loadSeedFromUrl();
+    if (urlSeed !== undefined) {
+      seed.value = urlSeed;
+    }
 
     // Then load from localStorage (used as fallback)
     const savedPrefs = loadPreferences();
@@ -249,11 +255,14 @@ onUnmounted(() => {
 /** Copies shareable URL with current settings to clipboard */
 async function handleShareUrl() {
   try {
-    await copyShareUrl({
-      theme: selectedTheme.value,
-      blocks: blocks.value,
-      options: { ...options },
-    });
+    await copyShareUrl(
+      {
+        theme: selectedTheme.value,
+        blocks: blocks.value,
+        options: { ...options },
+      },
+      seed.value
+    );
     shareCopied.value = true;
     setTimeout(() => {
       shareCopied.value = false;

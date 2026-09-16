@@ -7,8 +7,11 @@ import { describe, it, expect } from 'vitest'
 import {
   encodePreferencesToUrl,
   decodePreferencesFromUrl,
+  decodeSeedFromUrl,
 } from '../../composables/useShareUrl'
 import { DEFAULT_PREFERENCES } from '../../composables/usePreferences'
+import { generateText } from '../../utils/generate'
+import { themes } from '../../data/themes'
 
 describe('useShareUrl', () => {
   describe('encodePreferencesToUrl', () => {
@@ -174,6 +177,56 @@ describe('useShareUrl', () => {
       expect(decoded.theme).toBe(original.theme)
       expect(decoded.blocks).toBe(original.blocks)
       expect(decoded.options).toEqual(original.options)
+    })
+  })
+
+  describe('seed', () => {
+    it('should encode the seed when given', () => {
+      const params = encodePreferencesToUrl(DEFAULT_PREFERENCES, 73105)
+
+      expect(params.get('seed')).toBe('73105')
+    })
+
+    it('should omit the seed when not given', () => {
+      const params = encodePreferencesToUrl(DEFAULT_PREFERENCES)
+
+      expect(params.has('seed')).toBe(false)
+    })
+
+    it('should decode whole-number seeds, including zero', () => {
+      expect(decodeSeedFromUrl(new URLSearchParams('seed=73105'))).toBe(73105)
+      expect(decodeSeedFromUrl(new URLSearchParams('seed=0'))).toBe(0)
+      expect(decodeSeedFromUrl(new URLSearchParams('seed=2147483647'))).toBe(2147483647)
+    })
+
+    it('should reject seeds the generator cannot use', () => {
+      // Negative seeds index below zero and produce empty text; huge or
+      // non-integer ones lose the exact arithmetic the output depends on.
+      for (const bad of ['-6', '1e308', '4.2', 'abc', '', '2147483648', ' 42']) {
+        expect(decodeSeedFromUrl(new URLSearchParams({ seed: bad })), `seed=${bad}`).toBeUndefined()
+      }
+    })
+
+    it('should return undefined when the link has no seed', () => {
+      expect(decodeSeedFromUrl(new URLSearchParams('theme=dog&blocks=3'))).toBeUndefined()
+    })
+
+    it('should reproduce the exact text of a regenerated seed through a share link', () => {
+      const theme = themes.find(t => t.id === 'dog')!
+      const prefs = { ...DEFAULT_PREFERENCES, theme: 'dog', blocks: 4 }
+      const seed = 73105 // not the default: what Regenerate leaves on screen
+      const onScreen = generateText({ theme, blocks: prefs.blocks, seed, options: prefs.options })
+
+      const params = encodePreferencesToUrl(prefs, seed)
+      const decoded = decodePreferencesFromUrl(params, DEFAULT_PREFERENCES)
+      const received = generateText({
+        theme: themes.find(t => t.id === decoded.theme)!,
+        blocks: decoded.blocks!,
+        seed: decodeSeedFromUrl(params)!,
+        options: { ...DEFAULT_PREFERENCES.options, ...decoded.options },
+      })
+
+      expect(received).toBe(onScreen)
     })
   })
 })

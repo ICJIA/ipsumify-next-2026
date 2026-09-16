@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-09-16
+
+Three defects found by the application health check of 16 September 2026.
+
+### Fixed
+- **The browser tab read "Ipsumify - Lorem Ipsum Generator | %siteName".** `@nuxtjs/seo` sets the title template `%s %separator %siteName`, and with `ssr: false` its `%siteName` never resolves on the client: nuxt-site-config only sends the site name when `process.env.NUXT_NO_SSR` is set, which Nuxt 4.3 no longer provides at runtime. The placeholder showed in the tab, bookmarks and history, and in the page title a screen reader announces. `app.vue` now sets the template to `%s` — the title already names the site. Verified in a browser on a production build: the title reads "Ipsumify - Lorem Ipsum Generator" after the app loads, matching the prerendered `<title>`.
+- **A share link made after Regenerate showed the recipient different words.** Links carried the theme, block count and options but not the seed, so both ends fell back to seed 42 while Regenerate had picked another. Share Settings now writes `seed` into the link and the page reads it back, accepting only whole numbers from 0 to 2,147,483,647 — a negative seed makes the generator index below zero and return empty text, and past that the arithmetic is no longer guaranteed exact; anything else falls back to the default. The README's promise that others "see the same output" is now true. Verified in a browser on a production build: after Regenerate, the copied link was `/?theme=lorem&blocks=5&seed=80397`, and a fresh browser opening it showed the identical 1,125 characters; `seed=-6` shows ordinary text. Six new unit tests cover encoding, validation and the round trip itself.
+- **CI checked a build Netlify never runs, and hid a failing upload.** The build job ran `yarn generate` — a fully static build without the `/api/generate` function — and uploaded `.output/public`, which that configuration never writes, so the artifact step went green having uploaded nothing. It now runs `yarn build`, checks that both `dist/index.html` and the Netlify function bundle exist, and fails if the artifact path is empty. The Codecov upload failed on every run for want of a token (`Token required - not valid tokenless upload`) while `fail_ci_if_error: false` reported it green; it now runs only once a `CODECOV_TOKEN` secret exists, and fails the job if a configured upload breaks.
+
+Verified locally before release: `yarn install --frozen-lockfile`, `yarn lint`, `yarn typecheck`, `yarn test:coverage` (58 tests) and `yarn build` all exit 0, and the build writes both `dist/` and `.netlify/functions-internal/server/`.
+
 ## [2.3.1] - 2026-09-16
 
 ### Fixed
@@ -91,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.1...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.2...HEAD
+[2.3.2]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.1.0...v2.2.0

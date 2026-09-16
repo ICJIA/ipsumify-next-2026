@@ -17,7 +17,15 @@ const route = useRoute();
  */
 const canonicalHref = computed(() => new URL(route.path, config.url).href);
 
+/**
+ * Plain title template. @nuxtjs/seo's default, "%s %separator %siteName", never
+ * resolves `%siteName` on the client with `ssr: false` (nuxt-site-config only
+ * sends the site name when `process.env.NUXT_NO_SSR` is set, which Nuxt 4.3 no
+ * longer provides at runtime), so the tab read "… | %siteName". The title
+ * already names the site, so it is used as-is.
+ */
 useHead({
+  titleTemplate: "%s",
   htmlAttrs: {
     lang: "en",
     class: "dark",

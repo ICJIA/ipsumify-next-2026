@@ -34,7 +34,7 @@ export const config = {
   /** @type {string} ISO 8601 date first published (for JSON-LD / SEO freshness) */
   datePublished: "2026-02-15",
   /** @type {string} ISO 8601 date the page/metadata was last updated */
-  dateModified: "2026-06-07",
+  dateModified: "2026-09-16",
   /** @type {string} BCP 47 locale (e.g. en_US) */
   locale: "en_US",
   /** @type {string} Default locale for SEO (e.g. en) */
@@ -63,7 +63,7 @@ export const config = {
   ogImageAlt: "Ipsumify - Easily create placeholder text",
 
   /** @type {string} App version - keep in sync with package.json */
-  version: "2.3.1",
+  version: "2.3.2",
 
   /** @type {string} Default theme ID for generator (e.g. lorem, dog, cat) */
   defaultThemeId: "lorem",
