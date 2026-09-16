@@ -8,13 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.3.0] - 2026-09-16
 
 ### Removed
-- **The Docker deployment path, which could never have worked.** `Dockerfile`, `docker-compose.yml`, `.dockerignore`, and the ~215 README lines documenting Docker, Nginx, DigitalOcean and Laravel Forge deployment.
+- **The Docker deployment path, which was unused.** `Dockerfile`, `docker-compose.yml`, `.dockerignore`, and the ~215 README lines documenting Docker, Nginx, DigitalOcean and Laravel Forge deployment. Removed because it is not used and not planned.
 
-  The Dockerfile set `NITRO_PRESET=node-server` and then copied `/app/.output`. Nitro resolves `configOverrides.preset || process.env.NITRO_PRESET` (`nitropack/dist/core/index.mjs`), and `nuxt.config.ts` pins `nitro.preset: 'netlify'` — so the environment variable was never consulted. `yarn build` emits `dist/` and `.netlify/`, never `.output/`, leaving the `COPY` with no source and the image build failing. Confirmed by building: `dist/` and `.netlify/` are produced, `.output/` is not.
+  **Correction.** This entry, and the commit that made the change, first said the path could never have worked: that `nitro.preset: 'netlify'` in `nuxt.config.ts` outranks `NITRO_PRESET`, so `yarn build` could never produce the `.output/` the Dockerfile copies. That was wrong. `nuxt build` passes `NITRO_PRESET` to Nuxt as a config override (`@nuxt/cli`: `preset: ctx.args.preset || process.env.NITRO_PRESET || process.env.SERVER_PRESET`), and an override beats the config file. On a clean export of this release, `NITRO_PRESET=node-server yarn build` reports `Nitro preset: node-server` and writes `.output/`, and `node .output/server/index.mjs` serves both the page and `/api/generate`. The earlier check loaded the Nuxt config without the CLI, which does resolve `netlify`. The README's statement that "the environment variable overrides the preset at build time" was correct.
 
-  The README stated the opposite as fact — "the environment variable overrides the preset at build time" — so the documentation was not merely aspirational, it was wrong about the mechanism. Removed rather than fixed: the path is unused and not planned.
-
-  Netlify is now the only documented deployment, which is the only one that has ever run.
+  Netlify is now the only documented deployment.
 
 ### Fixed
 - **The README's Netlify publish directory.** It claimed `.output/public`; `netlify.toml` publishes `dist`. A reader configuring a new Netlify site by hand from the README would have pointed it at a directory the build does not create.
