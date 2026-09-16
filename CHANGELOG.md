@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-09-16
+
+### Removed
+- **The Docker deployment path, which could never have worked.** `Dockerfile`, `docker-compose.yml`, `.dockerignore`, and the ~215 README lines documenting Docker, Nginx, DigitalOcean and Laravel Forge deployment.
+
+  The Dockerfile set `NITRO_PRESET=node-server` and then copied `/app/.output`. Nitro resolves `configOverrides.preset || process.env.NITRO_PRESET` (`nitropack/dist/core/index.mjs`), and `nuxt.config.ts` pins `nitro.preset: 'netlify'` — so the environment variable was never consulted. `yarn build` emits `dist/` and `.netlify/`, never `.output/`, leaving the `COPY` with no source and the image build failing. Confirmed by building: `dist/` and `.netlify/` are produced, `.output/` is not.
+
+  The README stated the opposite as fact — "the environment variable overrides the preset at build time" — so the documentation was not merely aspirational, it was wrong about the mechanism. Removed rather than fixed: the path is unused and not planned.
+
+  Netlify is now the only documented deployment, which is the only one that has ever run.
+
+### Fixed
+- **The README's Netlify publish directory.** It claimed `.output/public`; `netlify.toml` publishes `dist`. A reader configuring a new Netlify site by hand from the README would have pointed it at a directory the build does not create.
+
 ## [2.2.0] - 2026-06-07
 
 ### Added
@@ -73,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/ICJIA/ipsumify-next-2026/releases/tag/v2.0.0
