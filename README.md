@@ -603,7 +603,7 @@ If you modify SEO tags, update them in **both** places:
 
 ## Accessibility & Quality Scores
 
-Measured on 10 November 2026 against a local production build of v2.6.0.
+Measured on 10 November 2026 against the live site, https://ipsumify.com, running v2.6.0.
 
 ### Lighthouse (desktop)
 
