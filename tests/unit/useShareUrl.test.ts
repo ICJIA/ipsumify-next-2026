@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
+  hasShareParams,
   encodePreferencesToUrl,
   decodePreferencesFromUrl,
   decodeSeedFromUrl,
@@ -228,5 +229,33 @@ describe('useShareUrl', () => {
 
       expect(received).toBe(onScreen)
     })
+  })
+})
+
+describe('strictness shared with the API', () => {
+  it('ignores a block count that is not plain digits', () => {
+    for (const value of ['7abc', '5.0', '+5', ' 5', '1e1', '005']) {
+      expect(decodePreferencesFromUrl(new URLSearchParams({ blocks: value }), DEFAULT_PREFERENCES).blocks).toBeUndefined()
+    }
+    expect(decodePreferencesFromUrl(new URLSearchParams({ blocks: '7' }), DEFAULT_PREFERENCES).blocks).toBe(7)
+  })
+
+  it('accepts headings as another name for headers', () => {
+    const decoded = decodePreferencesFromUrl(new URLSearchParams({ md: 'headings,lists' }), DEFAULT_PREFERENCES)
+    expect(decoded.options?.headers).toBe(true)
+    expect(decoded.options?.lists).toBe(true)
+  })
+})
+
+describe('hasShareParams', () => {
+  it('recognises a share link, including one with only default options', () => {
+    // What Share Settings writes when nothing is switched on
+    expect(hasShareParams(new URLSearchParams('theme=lorem&blocks=5&seed=42'))).toBe(true)
+    expect(hasShareParams(new URLSearchParams('seed=9'))).toBe(true)
+  })
+
+  it('does not treat other parameters as a share link', () => {
+    expect(hasShareParams(new URLSearchParams(''))).toBe(false)
+    expect(hasShareParams(new URLSearchParams('utm_source=x&ref=y'))).toBe(false)
   })
 })

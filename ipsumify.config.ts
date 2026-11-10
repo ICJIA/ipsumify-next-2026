@@ -63,7 +63,7 @@ export const config = {
   ogImageAlt: "Ipsumify - Easily create placeholder text",
 
   /** @type {string} App version - keep in sync with package.json and packages/ipsumify/package.json (a unit test checks) */
-  version: "2.5.0",
+  version: "2.6.0",
 
   /** @type {string} Default theme ID for generator (e.g. lorem, dog, cat) */
   defaultThemeId: "lorem",

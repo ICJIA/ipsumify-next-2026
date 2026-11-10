@@ -18,9 +18,17 @@ With a theme and the markdown elements switched on:
 
 ![Ipsumify showing the Dog-em Ipsum theme with headers, code snippets, blockquotes, lists, and links enabled](documentation/screenshot-markdown.png)
 
+The output panel, with Regenerate and Copy in its top bar:
+
+![The output panel showing the Baked-em Ipsum theme with a heading and a blockquote](documentation/screenshot-output.png)
+
 On the command line, with `npx ipsumify` (the commands' actual output, rendered as an image):
 
 ![Terminal output of npx ipsumify with a theme, headings, and a list](documentation/screenshot-cli.png)
+
+From the API (again the real responses, rendered as an image):
+
+![Terminal output of two curl requests to the API: a JSON response, and the message from a 400](documentation/screenshot-api.png)
 
 On a phone:
 
@@ -45,7 +53,7 @@ https://ipsumify.com
 - [Architecture](#architecture)
   - [SEO with ssr: false](#seo-with-ssr-false)
 - [Accessibility & Quality Scores](#accessibility--quality-scores)
-- [Security and Logic Audit](#security-and-logic-audit)
+- [Security and Logic Audits](#security-and-logic-audits)
 - [Security](#security)
 - [Contributing](#contributing)
 - [License](#license)
@@ -97,7 +105,7 @@ It uses the same engine as [ipsumify.com](https://ipsumify.com) and its API: the
 
 | Option | Short | What it does |
 | ------ | ----- | ------------ |
-| `--blocks <n>` | `-b` | Number of paragraphs, 1–20. Default 5. Also accepted as the first argument (`npx ipsumify 3`) or as `--paragraphs` / `-p` |
+| `--blocks <n>` | `-b` | Number of paragraphs, 1–20. Default 5. Also accepted as the first argument (`npx ipsumify 3`) or as `--paragraphs` / `-p`; give it one way only |
 | `--theme <id>` | `-t` | `lorem` (default), `dog`, `cat`, `baked`, `bbq` |
 | `--seed <n>` | `-s` | Whole number from 0 to 2,147,483,647. The same seed always gives the same text. Random when omitted |
 | `--headings` | | Add markdown headings (also `--headers`) |
@@ -231,7 +239,7 @@ themes                                              // [{ id: 'lorem', label: 'L
 | `noWrap` | boolean | `false` | Everything on one line |
 | `format` | string | `'markdown'` | `markdown`, `text`, `html` |
 
-An unknown theme or format, or a `blocks` or `seed` out of range, throws a `RangeError`. The package is ESM only and ships its own TypeScript types.
+An unknown theme or format, or a `blocks` or `seed` out of range, throws a `RangeError`. Options that are not an object, or a switch that is not `true` or `false`, throw a `TypeError`. `paragraphs()` ignores `format`. The package is ESM only and ships its own TypeScript types.
 
 ### Building and publishing the package
 
@@ -315,13 +323,13 @@ curl "https://ipsumify.com/api/generate?theme=dog&blocks=3"
 | `blocks`  | number | `5`        | Number of text blocks (1-20)                                        |
 | `seed`    | number | `42`       | RNG seed for deterministic output: a whole number from 0 to 2,147,483,647 |
 | `format`  | string | `markdown` | Response format: `markdown`, `json`, `text`, `html`                 |
-| `md`      | string | _(none)_   | Comma-separated markdown elements: `headers,code,quotes,lists,links` |
+| `md`      | string | _(none)_   | Comma-separated markdown elements: `headers,code,quotes,lists,links`. `headings` also works for `headers` |
 | `lower`   | string | _(off)_    | Set to `1` to disable capitalization                                |
 | `nowrap`  | string | _(off)_    | Set to `1` for single-line output                                   |
 
 ### Response Format
 
-All responses return JSON with this structure:
+Every response is JSON, whatever the `Accept` header. A success has this structure:
 
 ```json
 {
@@ -335,17 +343,26 @@ All responses return JSON with this structure:
 
 The `json` format additionally includes `options` and returns `output` as an array of strings (one per block of body text, without markdown elements) plus a `markdown` field with the full text.
 
-Invalid `theme`, `blocks`, `seed`, or `format` values return HTTP 400 with a JSON body whose `message` says what was wrong:
+### Strict requests
+
+The API accepts a request only if it is written one way, and answers anything else with HTTP 400 and a `message` saying what was wrong:
 
 ```json
 {
   "error": true,
-  "url": "https://ipsumify.com/api/generate?theme=zzz",
   "statusCode": 400,
-  "statusMessage": "Invalid theme \"zzz\". Valid themes: lorem, dog, cat, baked, bbq",
   "message": "Invalid theme \"zzz\". Valid themes: lorem, dog, cat, baked, bbq"
 }
 ```
+
+- **Only the seven parameters above.** An unknown parameter is an error, not ignored.
+- **Each parameter once.** Use `md=headers,code`, not `md=headers&md=code`.
+- **Plain values.** Letters, digits, and commas, with no percent-encoding or `+`, and no empty values (`theme=`).
+- **Numbers written plainly.** `blocks=5`, not `05`, `5.0`, or `5e0`.
+- **`md` names from the list**, each once.
+- **`lower=1` and `nowrap=1`**, or leave them out.
+
+This strictness is what keeps the CDN cache correct: the cache and the API must agree exactly on what a URL means. See the [audit](#security-and-logic-audits).
 
 ### Known Limitations
 
@@ -356,9 +373,9 @@ Invalid `theme`, `blocks`, `seed`, or `format` values return HTTP 400 with a JSO
 
 ### Caching and Fair Use
 
-The API is public with no authentication required. Responses, including 400 errors, are cached at the CDN edge (`Cache-Control: public, max-age=3600`) since identical parameters always produce identical output. Repeated requests with the same parameters are served from cache without invoking the serverless function.
+The API is public with no authentication required. Successful responses are cached at the CDN edge (`Cache-Control: public, max-age=3600`) since identical parameters always produce identical output. Repeated requests with the same parameters are served from cache without invoking the serverless function. Errors are never cached (`Cache-Control: no-store`).
 
-Only the seven documented parameters are part of the cache key (`Netlify-Vary`), so adding an unrelated parameter does not bypass the cache. There is no rate limit; each uncached request does a small, bounded amount of work (at most 20 blocks).
+The cache is keyed on the seven documented parameters (`Netlify-Vary`). There is no rate limit; each uncached request does a small, bounded amount of work (at most 20 blocks).
 
 The API is intended for use with `curl` and server-side code. Cross-origin browser requests (e.g., `fetch` from another domain) are blocked — no CORS headers are sent.
 
@@ -373,9 +390,9 @@ Ipsumify has two URL formats that serve different purposes:
 | **Use case** | Share a link so someone sees the same text in their browser | Programmatically retrieve generated text |
 | **curl/fetch** | Returns the full HTML page — not useful for text extraction | Returns structured JSON — designed for this |
 
-The share URL and API accept the same query parameters (`theme`, `blocks`, `md`, `lower`, `nowrap`, `seed`). The API additionally accepts `format`. Share Settings always writes the current `seed` into the link, so a link made after Regenerate reproduces the regenerated text. Both accept a `seed` from 0 to 2,147,483,647; a share link silently ignores an invalid value, where the API returns a 400.
+The share URL and API take the same parameters with the same meanings (`theme`, `blocks`, `md`, `lower`, `nowrap`, `seed`). The API additionally accepts `format`. Share Settings always writes the current `seed` into the link, so a link made after Regenerate reproduces the regenerated text. They differ in how they treat bad input: a share link ignores a parameter it cannot use and falls back to the default, where the API returns a 400.
 
-Opening a share link shows its settings without touching your saved preferences. If you then change a setting, what is on screen becomes your saved preferences. Clicking the logo resets everything and removes the link's parameters from the address bar.
+A share link shows exactly what it describes: anything it leaves out is at its default, regardless of the preferences the person opening it has saved. Opening one shows its settings without touching your saved preferences. If you then change a setting, what is on screen becomes your saved preferences. Clicking the logo resets everything and removes the link's parameters from the address bar.
 
 ## Tech Stack
 
@@ -395,7 +412,7 @@ Opening a share link shows its settings without touching your saved preferences.
 
 ### Prerequisites
 
-- Node.js 22.22.3 or higher (see `.nvmrc`; Nuxt 4.6 requires it)
+- Node.js 22.23.4 (see `.nvmrc`; Netlify and CI use the same version). Nuxt 4.6 supports `^22.22.3`, `^24.15.0`, and 26 or later, and nothing in between
 - Yarn 1.22.x (or npm/pnpm)
 
 ### Installation
@@ -425,6 +442,13 @@ yarn typecheck
 
 Use `yarn lint:fix` to auto-fix ESLint issues where possible.
 
+To run a production build locally, page and API together, build it for Node and start it:
+
+```bash
+NITRO_PRESET=node-server npx nuxt build
+node .output/server/index.mjs
+```
+
 ### Available Scripts
 
 | Command            | Description                                     |
@@ -432,8 +456,8 @@ Use `yarn lint:fix` to auto-fix ESLint issues where possible.
 | `yarn dev`         | Start development server with hot reload        |
 | `yarn build`       | Build for production (hybrid: static pages + serverless API), then write the page's CSP into `dist/_headers` |
 | `yarn build:cli`   | Build the npm package into `packages/ipsumify/dist/`         |
-| `yarn generate`    | Generate fully static site (no serverless functions)         |
-| `yarn preview`     | Preview production build locally                             |
+| `yarn generate`    | Generate a fully static site in `.output/public` (no API, and no Content-Security-Policy: `write-csp.mjs` runs only after `yarn build`) |
+| `yarn preview`     | Not supported for the Netlify build this project makes; it prints a message and exits. To run a production build locally, see below |
 | `yarn test`        | Run lint, typecheck, and unit tests                          |
 | `yarn test:all`    | Run lint, typecheck, unit tests, a production build, and the npm package build |
 | `yarn test:unit`   | Run Vitest unit tests                                        |
@@ -468,14 +492,18 @@ ipsumify/
 ├── scripts/
 │   └── write-csp.mjs           # Post-build: hashes inline scripts into the CSP
 ├── server/
-│   └── api/
-│       └── generate.get.ts     # GET /api/generate endpoint
+│   ├── api/
+│   │   └── generate.get.ts     # GET /api/generate endpoint
+│   └── middleware/
+│       └── guard.ts            # Security headers, and a real 404 for unknown URLs
 ├── utils/
 │   ├── clipboard.ts        # Clipboard utility with fallback
-│   ├── generate.ts         # Shared text generation (web UI + API)
+│   ├── apiQuery.ts         # Strict parsing of the API's query string
+│   ├── generate.ts         # Shared text generation (web UI, API, npm package)
+│   ├── html.ts             # HTML rendering of generated text
 │   └── random.ts           # Seeded PRNG utilities
 ├── tests/
-│   └── unit/               # Vitest unit tests (generate, random, cli, useLocalStorage, usePreferences, useShareUrl)
+│   └── unit/               # Vitest unit tests (apiQuery, cli, generate, html, keyboard, random, useLocalStorage, usePreferences, useShareUrl)
 ├── documentation/          # Screenshots for README
 ├── public/
 │   ├── icon.svg            # Favicon
@@ -542,7 +570,8 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 - **Build command:** `yarn build`
 - **Publish directory:** `dist`
 - **Node version:** 22.23.4 (set in `netlify.toml`)
-- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS come from `netlify.toml`. The Content-Security-Policy is generated at build time by `scripts/write-csp.mjs`, which hashes the page's inline scripts and appends the policy to `dist/_headers`. Netlify applies all of these to the static pages; the API sets its own headers in `server/api/generate.get.ts`
+- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS come from `netlify.toml`. The Content-Security-Policy is generated at build time by `scripts/write-csp.mjs`, which hashes the page's inline scripts and appends the policy to `dist/_headers`. Netlify applies all of these to the static page and its assets. Everything else is answered by the function, which sets its own: `server/middleware/guard.ts` for every response, and `server/api/generate.get.ts` for the API
+- **Unknown URLs** get a plain-text 404 from the function, not the app's HTML shell
 - **API:** `server/api/` routes are automatically deployed as Netlify Functions
 
 1. Connect your repository to Netlify
@@ -551,7 +580,7 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 
 ## Architecture
 
-- **Hybrid deployment:** Pages are prerendered as static files; the API runs as a serverless function (Netlify Functions via Nitro)
+- **Hybrid deployment:** The page is prerendered as a static file. A serverless function (Netlify Functions via Nitro) runs the API, serves `robots.txt` and `sitemap.xml`, and answers every other URL with a 404
 - **Shared generation logic:** Both the web UI and API use `utils/generate.ts` — same code, same output
 - **Deterministic output:** Uses a seeded LCPRNG so identical parameters always produce identical text (enables aggressive CDN caching)
 - **Config hierarchy:** `ipsumify.config.ts` → `nuxt.config.ts`; theme content lives in `data/themes.ts`
@@ -574,7 +603,7 @@ If you modify SEO tags, update them in **both** places:
 
 ## Accessibility & Quality Scores
 
-Measured on 10 November 2026 against a local production build of v2.5.0.
+Measured on 10 November 2026 against a local production build of v2.6.0.
 
 ### Lighthouse (desktop)
 
@@ -592,44 +621,106 @@ Measured on 10 November 2026 against a local production build of v2.5.0.
 | Desktop  | 0                      |
 | Mobile   | 0                      |
 
-## Security and Logic Audit
+## Security and Logic Audits
 
-**Audit date: 10 November 2026.** The whole codebase was read and the running app and API were probed with edge-case input. Every finding below was reproduced before it was fixed, and each fix was verified afterwards: by unit tests (93, up from 58), by requests against a local build of the API, and in a browser against the production build served with its real headers. All fixes shipped in v2.5.0.
+Newest first. The most recent is given in full; earlier ones are summarised, with every finding kept.
 
-Nothing found was high severity: the app has no accounts, stores no user data on the server, and renders no untrusted HTML.
+| Date | Audit | Released in | Findings |
+| ---- | ----- | ----------- | -------- |
+| 10 November 2026 | [Red team / blue team exercise](#red-team--blue-team-exercise-10-november-2026) | v2.6.0 | 18: 1 medium, 14 low, 3 informational. All fixed |
+| 10 November 2026 | [Security and logic audit](#security-and-logic-audit-10-november-2026) | v2.4.0, v2.5.0 | 18: 2 medium, 16 low or informational. 16 fixed, 1 mitigated, 1 accepted; two of the fixes were completed in v2.6.0 |
+| 16 September 2026 | [Application health check](#application-health-check-16-september-2026) | v2.3.0 – v2.3.2 | 5 defects, all fixed |
 
-### Security
+No audit has found a high or critical issue in the app's own code: it has no accounts, stores no user data on the server, and renders no untrusted HTML.
 
-| # | Finding | Severity | Status | Fix or mitigation |
-| - | ------- | -------- | ------ | ----------------- |
-| S1 | **351 known advisories in dependencies** (8 critical, 179 high), with 26 Dependabot pull requests unmerged since February | Medium | Fixed (v2.4.0) | Every dependency and CI action updated. `yarn audit` now reports 12, none critical or high; all 12 are in build and lint tooling or in `nuxt-og-image`, which this site disables |
-| S2 | **Repeating a query parameter crashed the API.** `?md=headers&md=code` returned HTTP 500 | Low | Fixed | Repeated values are joined with commas; `md` accepts them and every other parameter rejects them with a 400 |
-| S3 | **The API had almost no security headers.** `netlify.toml` headers reach only static pages | Low | Fixed | The API now sets `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and a `default-src 'none'` CSP itself |
-| S4 | **The CDN cache was trivially bypassed, and there is no rate limit.** Any extra parameter (`?x=1`) or any of 2⁵³ seeds forced a fresh function run | Low | Mitigated | `Netlify-Vary` limits the cache key to the seven real parameters, and `seed` is limited to 0–2,147,483,647. Distinct valid requests still each run the function once; the work per request is small and bounded. A true rate limit would need Netlify's paid rate-limiting rules and is not configured |
-| S5 | **Icons were fetched from `api.iconify.design` on every first visit**, disclosing visitor IPs to a third party and breaking icons if it was down | Low | Fixed | Icons are compiled into the bundle, the fallback fetch is switched off, and the CSP no longer allows that origin |
-| S6 | **The CSP allowed any inline script** (`script-src 'unsafe-inline'`) | Low | Fixed | Inline scripts are allowed by SHA-256 hash, computed from each build's HTML. A script injected into the page is refused; confirmed in a browser. `img-src` no longer allows arbitrary `https:` hosts, and `object-src 'none'` was added |
-| S7 | **`X-XSS-Protection: 1; mode=block`** is deprecated and can introduce problems in old browsers | Info | Fixed | Header removed |
-| S8 | **Saved preferences were trusted as read.** A corrupt or hand-edited `localStorage` value could throw on load, or request a billion blocks and freeze the page on every visit | Low | Fixed | Every field is validated and falls back to its default |
-| S9 | **`style-src` still allows inline styles** | Info | Accepted | Vue and the UI library set element styles at runtime. With no untrusted HTML rendered, the risk is negligible |
+### Red team / blue team exercise (10 November 2026)
 
-### Faulty logic
+**Method.** After the audit below was fixed and released as v2.5.0, an independent reviewer (a separate AI agent, given the code and a list of what had been fixed, but not how) was given the repository and told to attack it: the API, the Content-Security-Policy and its build script, the client logic, the npm package, the release process, and every factual claim in the documentation. It was told what the earlier audit had fixed and asked to look for bypasses. It could run the code locally and send a limited number of ordinary GET requests to the live site (about 59 were sent). The blue team then verified each finding, fixed it, added tests, and re-tested locally and in production. Unit tests went from 95 to 128.
 
-| # | Finding | Status | Fix |
-| - | ------- | ------ | --- |
-| L1 | **`format=json` disagreed with itself.** With `md=headers`, the `output` array held different blocks from the `markdown` field (491 of 500 seeds tested), because headings draw from the random sequence that sizes the blocks and the array was built by a separate loop | Fixed | One generation pass now produces both. Every `output` entry appears verbatim in `markdown` |
-| L2 | **Negative seeds produced broken text.** `seed=-5000` returned 10 characters; others returned unshuffled or truncated text | Fixed | The generator normalizes any seed into its range, and the API rejects seeds outside 0–2,147,483,647 with a 400, as share links already did. Output for every valid seed is unchanged (167,310 old-versus-new comparisons, no differences) |
-| L3 | **The API accepted `seed=` (as 0), `seed=1e3`, and `blocks=1.0`** | Fixed | `blocks` and `seed` must be plain whole numbers |
-| L4 | **`format=text` with `nowrap=1` left markdown in the text**: `>` markers, `•` bullets, and every heading's `#` after the first | Fixed | Markers are stripped wherever they appear, not only at the start of a line |
-| L5 | **Opening a share link replaced your saved preferences** | Fixed | Nothing is saved until you change a setting yourself. Resetting also removes the link's parameters from the address bar |
-| L6 | **The copy shortcut reported success regardless.** Alt+Shift+C showed "Copied to clipboard" even when the copy failed | Fixed | The message now reflects the result |
-| L7 | **Regenerate could leave the text unchanged**, and drew from 100,000 seeds of a possible 233,280 | Fixed | It draws from the whole range and redraws if the text would not change |
-| L8 | **On phones the "Ipsumify" wordmark ran into the GitHub link** | Fixed | The header scales down below 640px |
-| L9 | **A deploy could not build.** The dependency update moved Nuxt to a version needing Node 22.22.3 or later while `.nvmrc` pinned 22.14.0; Netlify's v2.4.0 deploy failed | Fixed | `.nvmrc`, `netlify.toml`, and `package.json` `engines` now agree on a supported Node version |
+**The headline: the earlier cache fix could be bypassed, and worse.** v2.5.0 told the CDN to key its cache on the API's seven parameter names. The CDN compares those names against the raw URL; the API's query parser percent-decoded them first. So `?th%65me=dog` was `theme=dog` to the API and an unknown, ignored name to the cache, and the dog-themed text was stored for the URL with no theme at all. Anyone could make a clean API URL, including the bare `/api/generate`, return a different (valid) response for up to an hour. It was reproduced on the live site. No data was at risk, but the API's promise that a URL always returns the same text was not being kept.
 
-### Not changed
+The fix replaces the query parser for the API with one that decodes nothing: a request is accepted only if every name is literally one of the seven, appears once, and has a plain value written in exactly one way. Everything else is an HTTP 400, and errors are no longer cached at all. The cache and the API can no longer disagree about what a URL means, because the API refuses any URL where they might.
 
-- **Seeds repeat every 233,280 values.** This is a property of the generator. Changing it would change the text behind every existing share link and cached API response.
-- **400 responses are cached for an hour**, like successes. The same bad request always gets the same answer.
+#### Findings
+
+| # | Finding | Severity | Status | Fix |
+| - | ------- | -------- | ------ | --- |
+| R1 | **CDN cache poisoning through percent-encoded parameter names** (`th%65me=dog`), reproduced in production | Medium | Fixed | `utils/apiQuery.ts` parses the raw query string and refuses unknown, encoded, or repeated names with a 400; 400s are sent `Cache-Control: no-store` |
+| R2 | **The junk-parameter cache fix was bypassable with junk values**: `md=anything`, `lower=zz`, `blocks=05`, and `seed=0000000042` all returned the normal text under a new cache key | Low | Fixed | Unknown or repeated `md` names, switch values other than `1`, leading zeros, and empty values are all 400s. One output now has a small, fixed number of URLs |
+| R3 | **A repeated parameter could be read differently by the cache and the API.** `lower=1&lower=1` was silently ignored; `md=a&md=b` was joined | Low | Fixed | Any parameter given twice is a 400. This reverses the previous audit's choice to join repeated `md` values |
+| R4 | **API errors depended on the `Accept` header.** A browser got an HTML page for a 400, with a policy that blocked that page's own scripts | Low | Fixed | Errors are returned by the handler as JSON, always, with the handler's own headers. The body is now `{ error, statusCode, message }` |
+| R5 | **Everything the function served, apart from the API, had no CSP and no clickjacking protection**: `robots.txt`, `sitemap.xml`, and the app shell that Nuxt returned for any unknown URL | Low | Fixed | `server/middleware/guard.ts` sets the security headers on every function response |
+| R6 | **Unknown URLs were soft 404s.** `/anything` returned HTTP 200 with the app shell, marked indexable, with a broken page title, and ran the function every time | Low | Fixed | Unknown paths get a plain-text 404 with `X-Robots-Tag: noindex`, cached for five minutes. `/favicon.ico`, which used to return 78 bytes of text labelled as an image, is one of them |
+| R7 | **A share link with all-default options did not reproduce the sender's text** for a recipient with saved preferences: the link omits defaults, and the gaps were filled from the recipient's own settings | Low | Fixed | When the URL is a share link, whatever it omits is the default. Verified in a browser with deliberately different saved preferences |
+| R8 | **`md=headings` worked on the command line but was silently ignored by the API and share links** | Low | Fixed | `headings` is accepted everywhere as another name for `headers` |
+| R9 | **Share links read `blocks=7abc` as 7** (`parseInt`), where the API rejects it | Low | Fixed | Digits only |
+| R10 | **Keyboard shortcuts:** holding Alt+Shift+D saved the file repeatedly; the chords also fired with Ctrl or Cmd held; a `keydown` event with no key (browser autofill sends these) threw an error | Low | Fixed | Repeats and keyless events are ignored, modifiers must match exactly, and typing in a field is left alone |
+| R11 | **`nowrap` with `headers` and `format=html` returned the whole text inside one `<h1>`** (API, command line, and Copy as HTML) | Low | Fixed | HTML is rendered from the wrapped text, then put on one line |
+| R12 | **The command line accepted `--md __proto__`, `--md constructor`**, and other inherited property names as markdown elements. No harm resulted | Low | Fixed | Looked up in a `Map` |
+| R13 | **The command line silently dropped a conflicting block count** (`ipsumify 3 --blocks 1` printed one block) | Low | Fixed | Giving the count more than once is an error |
+| R14 | **Library small print:** `paragraphs()` rejected a `format` it documents as ignored; `ipsumify('dog')` silently returned default text and `ipsumify(null)` threw a raw error; `headers: 'false'` (a string) switched headings on; the exported `themes` and `FORMATS` could be modified by callers; `require('ipsumify')` failed | Low | Fixed | Options must be an object and switches must be booleans (`TypeError` otherwise); the exports are frozen; a `default` export condition was added |
+| R15 | **CI ran with a write-capable token**, actions pinned by movable tags, the checkout's credentials left on disk for every dependency's install script, and a secret exposed to every step | Low | Fixed | `permissions: contents: read`, actions pinned to commit hashes, `persist-credentials: false`, the secret scoped to its one step. CI now installs the Node version in `.nvmrc`, which is the gap that let v2.4.0's failed deploy through |
+| R16 | **`scripts/write-csp.mjs` wrote a second policy if run twice on the same build** | Info | Fixed | It replaces any policy it wrote before |
+| R17 | **`publish.sh` read the changelog from the working tree, not the release's tag, and did not check the tag was on GitHub.** `package.json` `engines` also admitted Node versions Nuxt does not support | Info | Fixed | The changelog is read from the tag; the tag must exist on origin at the same commit; `engines` matches Nuxt's range |
+| R18 | **Documentation that was not true**: 16 statements across the README, SECURITY.md, the changelog, and code comments, most of them describing the two incomplete fixes above | Info | Fixed | Each corrected. Among them: `yarn preview` does not work with this build, and "all responses return JSON" was false until R4 |
+
+#### What the red team tried that held
+
+- **Header injection and response splitting** through the reflected error message: control characters are stripped and long values refused.
+- **Cross-site scripting**: there is no `v-html` or `innerHTML`; rendered HTML only ever goes to the clipboard and is built only from the themes' fixed text; URL and saved values are checked against allow-lists.
+- **Type confusion and prototype keys** in the API (`theme[]=`, `__proto__=`, `constructor=`, full-width digits, oversized lists): all answered with a clean 200 or 400, never a 500.
+- **Regular-expression denial of service**: every pattern is linear, and none runs on caller-supplied text.
+- **The page's Content-Security-Policy**: all five hashes on the live site matched the scripts actually served.
+- **The npm package**: the published `ipsumify@2.5.0` was byte-for-byte what a local build of the tagged source produces, with no dependencies and no install scripts. Its output was identical under Node 18.3 and 22.
+- **`publish.sh`**: no path was found that publishes an unreviewed or untested build.
+- **The README's 12 console examples** matched the real output exactly.
+
+#### Left as it is, and why
+
+- **No rate limit.** Each uncached request is small and bounded, and the number of distinct valid URLs is now finite per output. A real limit needs Netlify's paid rate-limiting rules.
+- **`style-src 'unsafe-inline'`** in the page's policy: the UI library sets element styles at runtime.
+- **Seeds repeat every 233,280 values.** Changing the generator would change the text behind every existing link.
+
+#### Recommended, but a repository setting rather than code
+
+- Protect the `main` branch on GitHub, and set the repository's default workflow token to read-only. The workflow now asks for read-only itself, but `main` is both the production deploy and what `publish.sh` trusts, and it currently accepts direct pushes.
+
+### Security and logic audit (10 November 2026)
+
+The whole codebase was read and the running app and API probed with edge-case input. Released in v2.4.0 and v2.5.0; unit tests went from 58 to 95. Two of its fixes (S2 and S4) were later shown to be incomplete by the red team above.
+
+| # | Finding | Severity | Outcome |
+| - | ------- | -------- | ------- |
+| S1 | 351 known advisories in dependencies (8 critical, 179 high); 26 Dependabot pull requests unmerged since February | Medium | Fixed: everything updated; 12 advisories remain, none critical or high, all in build tooling or a disabled module |
+| S2 | Repeating a query parameter (`?md=a&md=b`) crashed the API with a 500 | Low | Fixed by joining the values; replaced in v2.6.0 by refusing repeats (R3) |
+| S3 | The API had almost no security headers | Low | Fixed: the handler sets its own |
+| S4 | The CDN cache was bypassed by any extra parameter; no rate limit | Low | Mitigated with a `Netlify-Vary` cache key and a bounded seed; found bypassable and completed in v2.6.0 (R1, R2) |
+| S5 | Icons were fetched from `api.iconify.design` on every first visit | Low | Fixed: compiled into the bundle; the page makes no third-party requests |
+| S6 | The page's CSP allowed any inline script | Low | Fixed: inline scripts allowed by per-build SHA-256 hash |
+| S7 | Deprecated `X-XSS-Protection` header | Info | Fixed: removed |
+| S8 | Saved preferences were trusted as read; a bad value could freeze the page on every visit | Low | Fixed: every field validated |
+| S9 | `style-src` allows inline styles | Info | Accepted |
+| L1 | `format=json` with `md=headers` returned an `output` array that did not match its `markdown` field (491 of 500 seeds) | Low | Fixed: one generation pass produces both |
+| L2 | Negative seeds produced broken text | Low | Fixed: seeds normalized and range-checked. Text for valid seeds unchanged (167,310 comparisons) |
+| L3 | The API accepted `seed=`, `seed=1e3`, and `blocks=1.0` | Low | Fixed: whole numbers only |
+| L4 | `format=text` with `nowrap=1` left markdown markers in the text | Low | Fixed |
+| L5 | Opening a share link replaced the visitor's saved preferences | Low | Fixed: nothing is saved until the visitor changes a setting |
+| L6 | The copy shortcut reported success even when the copy failed | Low | Fixed |
+| L7 | Regenerate could leave the text unchanged | Low | Fixed: redraws until it changes |
+| L8 | On phones the wordmark overlapped the GitHub link | Low | Fixed |
+| L9 | v2.4.0 could not deploy: the updated Nuxt needed a newer Node than `.nvmrc` pinned | Medium | Fixed: one Node version in `.nvmrc`, `netlify.toml`, and (since v2.6.0) CI |
+
+### Application health check (16 September 2026)
+
+A check of the build, CI, and the app in a browser. Released in v2.3.0 to v2.3.2.
+
+| # | Finding | Outcome |
+| - | ------- | ------- |
+| H1 | CI had failed on every push for a day: `vue-tsc` was undeclared, so the typecheck fetched an incompatible latest version | Fixed: declared and locked |
+| H2 | The browser tab read "… \| %siteName": the SEO module's title template never resolved with server rendering off | Fixed: a plain title template |
+| H3 | A share link made after Regenerate showed the recipient different words, because links did not carry the seed | Fixed: the seed is in the link, range-checked on the way in |
+| H4 | CI built with a command Netlify never runs and uploaded a directory that did not exist, reporting success; a failing coverage upload was hidden | Fixed: CI runs the real build, checks its output, and fails loudly |
+| H5 | An unused Docker deployment path, and a README that named the wrong Netlify publish directory | Removed and corrected |
 
 ## Security
 

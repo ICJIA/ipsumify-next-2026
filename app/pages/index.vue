@@ -14,7 +14,7 @@ import { useKeyboardShortcuts } from "../../composables/useKeyboardShortcuts";
 import { useShareUrl } from "../../composables/useShareUrl";
 import { copyToClipboard } from "../../utils/clipboard";
 import { SEED_PERIOD } from "../../utils/random";
-import { marked } from "marked";
+import { renderHtml } from "../../utils/html";
 
 /** SEO meta tags from ipsumify.config */
 useSeoMeta({
@@ -99,7 +99,7 @@ const options = reactive({
 const { loadPreferences, savePreferences, resetPreferences, DEFAULT_PREFERENCES } = usePreferences();
 
 /** Share URL management */
-const { copyShareUrl, loadFromUrl, loadSeedFromUrl } = useShareUrl();
+const { copyShareUrl, loadFromUrl, loadSeedFromUrl, isShareLink } = useShareUrl();
 
 /**
  * Whether changes are written to localStorage yet. Off until the first load
@@ -123,8 +123,11 @@ onMounted(async () => {
       seed.value = urlSeed;
     }
 
-    // Then load from localStorage (used as fallback)
-    const savedPrefs = loadPreferences();
+    // A share link leaves out whatever is at its default, so what it leaves
+    // out means "the default", not "whatever this visitor has saved": filling
+    // the gaps from saved preferences showed the recipient different text.
+    // Saved preferences apply only to a plain visit.
+    const savedPrefs = isShareLink() ? DEFAULT_PREFERENCES : loadPreferences();
 
     // Apply preferences (URL params override localStorage)
     selectedTheme.value = urlPrefs.theme ?? savedPrefs.theme;
@@ -199,7 +202,11 @@ function handleRegenerate() {
   seed.value = next;
 }
 
-/** Resets all options and state to ipsumify.config defaults, scrolls to top */
+/**
+ * Resets all options and state to ipsumify.config defaults, scrolls to top.
+ * Saved preferences end up holding the defaults: resetPreferences() clears
+ * them, and the watcher then saves the state it sees change.
+ */
 function handleReset() {
   blocks.value = config.defaultBlocks;
   seed.value = config.defaultSeed;
@@ -226,7 +233,12 @@ async function handleCopy(format: 'markdown' | 'html' = 'markdown'): Promise<boo
     let textToCopy = generatedText.value;
 
     if (format === 'html') {
-      textToCopy = await marked(generatedText.value);
+      textToCopy = renderHtml({
+        theme: currentTheme.value,
+        blocks: blocks.value,
+        seed: seed.value,
+        options: { ...options },
+      });
     }
 
     await copyToClipboard(textToCopy);

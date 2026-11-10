@@ -19,7 +19,7 @@
  * changed and the policy needs a second look.
  */
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, appendFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 
 const PAGE = 'dist/index.html'
 const HEADERS = 'dist/_headers'
@@ -66,5 +66,9 @@ const policy = [
   `form-action 'self'`,
 ].join('; ')
 
-appendFileSync(HEADERS, `/*\n  Content-Security-Policy: ${policy}\n`)
+// Replace a policy written by an earlier run on the same dist/, so the file
+// never holds two (a browser enforces every policy it is sent)
+const existing = existsSync(HEADERS) ? readFileSync(HEADERS, 'utf8') : ''
+const withoutPolicy = existing.replace(/^\/\*\n {2}Content-Security-Policy: .*\n/gm, '')
+writeFileSync(HEADERS, `${withoutPolicy}/*\n  Content-Security-Policy: ${policy}\n`)
 console.log(`[csp] Wrote policy with ${hashes.size} script hashes to ${HEADERS}.`)

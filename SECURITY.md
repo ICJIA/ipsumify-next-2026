@@ -80,15 +80,15 @@ Ipsumify implements several security measures:
 - localStorage only (no cookies)
 - No user authentication required
 - No server-side data storage
-- The page is prerendered and static; the only server code is the stateless `GET /api/generate` function, which validates its inputs and reads no user data
+- The page is prerendered and static. The server code is one stateless Netlify Function: it runs `GET /api/generate`, which parses its query string strictly and reads no user data; serves `robots.txt` and `sitemap.xml`; and answers every other URL with a 404. It sets security headers on everything it returns
 
-The most recent audit, with each finding and its fix, is in the [README](README.md#security-and-logic-audit).
+Every audit, with each finding and its fix, is in the [README](README.md#security-and-logic-audits), newest first.
 
 ## Known Limitations
 
 - **LocalStorage**: User preferences stored in browser (can be cleared)
 - **Share URLs**: Settings encoded in URL (visible in browser history)
-- **Public API**: No authentication or rate limiting. Responses are CDN-cached for an hour, keyed on the documented parameters only
+- **Public API**: No authentication or rate limiting. Successful responses are CDN-cached for an hour, keyed on the documented parameters; errors are never cached
 - **Inline styles**: `style-src` allows `'unsafe-inline'`, which the UI library needs
 
 ## Vulnerability Disclosure Policy

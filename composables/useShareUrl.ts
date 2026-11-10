@@ -90,11 +90,11 @@ export function decodePreferencesFromUrl(
     decoded.theme = theme
   }
 
-  // Decode blocks
+  // Decode blocks: digits only, as the API requires ("7abc" is not 7)
   const blocks = params.get('blocks')
-  if (blocks) {
-    const blocksNum = parseInt(blocks, 10)
-    if (!isNaN(blocksNum) && blocksNum >= 1 && blocksNum <= 20) {
+  if (blocks && /^\d{1,2}$/.test(blocks)) {
+    const blocksNum = Number(blocks)
+    if (blocksNum >= 1 && blocksNum <= 20) {
       decoded.blocks = blocksNum
     }
   }
@@ -110,7 +110,7 @@ export function decodePreferencesFromUrl(
     // Parse markdown options
     if (md) {
       const enabledOptions = md.split(',')
-      decoded.options.headers = enabledOptions.includes('headers')
+      decoded.options.headers = enabledOptions.includes('headers') || enabledOptions.includes('headings')
       decoded.options.codeSnippets = enabledOptions.includes('code')
       decoded.options.blockquotes = enabledOptions.includes('quotes')
       decoded.options.lists = enabledOptions.includes('lists')
@@ -127,6 +127,19 @@ export function decodePreferencesFromUrl(
   }
 
   return decoded
+}
+
+/** The query parameters a share link can carry. */
+const SHARE_PARAMS = ['theme', 'blocks', 'seed', 'md', 'lower', 'nowrap']
+
+/**
+ * Whether the URL parameters are a share link's.
+ *
+ * @param params - URL search parameters
+ * @returns True if any share parameter is present
+ */
+export function hasShareParams(params: URLSearchParams): boolean {
+  return SHARE_PARAMS.some(name => params.has(name))
 }
 
 /**
@@ -193,10 +206,24 @@ export function useShareUrl() {
     return decodeSeedFromUrl(new URLSearchParams(window.location.search))
   }
 
+  /**
+   * Whether the current URL is a share link.
+   *
+   * @returns True if the URL carries any share parameter
+   */
+  function isShareLink(): boolean {
+    if (import.meta.server) {
+      return false
+    }
+
+    return hasShareParams(new URLSearchParams(window.location.search))
+  }
+
   return {
     generateShareUrl,
     copyShareUrl,
     loadFromUrl,
     loadSeedFromUrl,
+    isShareLink,
   }
 }

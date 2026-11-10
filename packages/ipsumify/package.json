@@ -1,6 +1,6 @@
 {
   "name": "ipsumify",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Lorem ipsum generator for the command line and Node: markdown-ready placeholder text with themes, seeds, and plain text, HTML or JSON output.",
   "keywords": [
     "lorem",
@@ -29,8 +29,10 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",
   "files": [

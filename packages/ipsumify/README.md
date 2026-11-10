@@ -6,6 +6,8 @@ Lorem ipsum for the command line and Node: markdown-ready placeholder text with 
 npx ipsumify
 ```
 
+![Terminal output of npx ipsumify with a theme, headings, and a list](https://raw.githubusercontent.com/ICJIA/ipsumify-next-2026/main/documentation/screenshot-cli.png)
+
 With no arguments it prints five paragraphs of classic lorem ipsum. Nothing to install, no dependencies, Node 18.3 or later.
 
 It uses the same engine as [ipsumify.com](https://ipsumify.com) and its API: the same theme, block count, seed, and options give the same text in all three.
@@ -14,7 +16,7 @@ It uses the same engine as [ipsumify.com](https://ipsumify.com) and its API: the
 
 | Option | Short | What it does |
 | ------ | ----- | ------------ |
-| `--blocks <n>` | `-b` | Number of paragraphs, 1–20. Default 5. Also accepted as the first argument (`npx ipsumify 3`) or as `--paragraphs` / `-p` |
+| `--blocks <n>` | `-b` | Number of paragraphs, 1–20. Default 5. Also accepted as the first argument (`npx ipsumify 3`) or as `--paragraphs` / `-p`; give it one way only |
 | `--theme <id>` | `-t` | `lorem` (default), `dog`, `cat`, `baked`, `bbq` |
 | `--seed <n>` | `-s` | Whole number from 0 to 2,147,483,647. The same seed always gives the same text. Random when omitted |
 | `--headings` | | Add markdown headings (also `--headers`) |
@@ -148,7 +150,7 @@ themes                                              // [{ id: 'lorem', label: 'L
 | `noWrap` | boolean | `false` | Everything on one line |
 | `format` | string | `'markdown'` | `markdown`, `text`, `html` |
 
-An unknown theme or format, or a `blocks` or `seed` out of range, throws a `RangeError`. The package is ESM only and ships its own TypeScript types.
+An unknown theme or format, or a `blocks` or `seed` out of range, throws a `RangeError`. Options that are not an object, or a switch that is not `true` or `false`, throw a `TypeError`. `paragraphs()` ignores `format`. The package is ESM only and ships its own TypeScript types.
 
 ## Links
 

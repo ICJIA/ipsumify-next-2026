@@ -41,12 +41,15 @@ export declare function randomSeed(): number
 /**
  * Generates placeholder text.
  * @throws {RangeError} For an unknown theme or format, or blocks or seed out of range
+ * @throws {TypeError} If options is not an object, or a switch is not a boolean
  */
 export declare function ipsumify(options?: IpsumifyOptions): string
 
 /**
  * Generates the body paragraphs as an array, one string per block, without markdown elements.
+ * `format` is ignored.
  * @throws {RangeError} For an unknown theme, or blocks or seed out of range
+ * @throws {TypeError} If options is not an object, or a switch is not a boolean
  */
 export declare function paragraphs(options?: IpsumifyOptions): string[]
 

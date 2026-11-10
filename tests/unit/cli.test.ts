@@ -4,7 +4,7 @@
  * @module tests/unit/cli
  */
 import { describe, it, expect } from 'vitest'
-import { ipsumify, paragraphs, themes } from '../../packages/ipsumify/src/index'
+import { ipsumify, paragraphs, themes, FORMATS } from '../../packages/ipsumify/src/index'
 import { run, HELP } from '../../packages/ipsumify/src/run'
 import { themes as themeData } from '../../data/themes'
 import { generateText, DEFAULT_OPTIONS } from '../../utils/generate'
@@ -150,5 +150,48 @@ describe('command line', () => {
       expect(result.stdout).toBe('')
       expect(result.stderr).toMatch(/^ipsumify: /)
     }
+  })
+})
+
+describe('hardening', () => {
+  it('refuses a block count given more than once', () => {
+    for (const argv of [['3', '--blocks', '1'], ['-b', '1', '-p', '2'], ['2', '-p', '2']]) {
+      const result = run(argv)
+      expect(result.code).toBe(1)
+      expect(result.stderr).toContain('more than once')
+    }
+  })
+
+  it('refuses --md names that are only object properties', () => {
+    for (const name of ['__proto__', 'constructor', 'toString', 'valueOf', 'hasOwnProperty']) {
+      expect(run(['1', '--md', name]).code).toBe(1)
+    }
+  })
+
+  it('renders no-wrap html with a short heading, not one giant one', () => {
+    const html = run(['3', '--headings', '--nowrap', '--format', 'html', '--seed', '42']).stdout.trimEnd()
+    expect(html).not.toContain('\n')
+    expect(html.match(/<h1>(.*?)<\/h1>/)?.[1]?.length).toBeLessThan(60)
+  })
+
+  it('throws a TypeError for options that are not an object', () => {
+    for (const value of ['dog', 3, [], null, true]) {
+      expect(() => ipsumify(value as never)).toThrow(TypeError)
+      expect(() => paragraphs(value as never)).toThrow(TypeError)
+    }
+  })
+
+  it('throws a TypeError for a switch that is not a boolean', () => {
+    expect(() => ipsumify({ headers: 'false' as never })).toThrow(TypeError)
+    expect(() => ipsumify({ noWrap: 1 as never })).toThrow(TypeError)
+  })
+
+  it('ignores format in paragraphs(), as documented', () => {
+    expect(paragraphs({ blocks: 2, seed: 1, format: 'nope' as never })).toHaveLength(2)
+  })
+
+  it('exports frozen lists', () => {
+    expect(Object.isFrozen(themes)).toBe(true)
+    expect(Object.isFrozen(FORMATS)).toBe(true)
   })
 })

@@ -62,14 +62,17 @@ Examples
   npx ipsumify | pbcopy
 `
 
-const MD_NAMES: Record<string, keyof IpsumifyOptions> = {
-  headings: 'headers',
-  headers: 'headers',
-  code: 'code',
-  quotes: 'quotes',
-  lists: 'lists',
-  links: 'links',
-}
+type MdOption = 'headers' | 'code' | 'quotes' | 'lists' | 'links'
+
+// A Map, not an object: "constructor" and "__proto__" are not markdown elements
+const MD_NAMES: ReadonlyMap<string, MdOption> = new Map([
+  ['headings', 'headers'],
+  ['headers', 'headers'],
+  ['code', 'code'],
+  ['quotes', 'quotes'],
+  ['lists', 'lists'],
+  ['links', 'links'],
+])
 
 function fail(message: string): RunResult {
   return { code: 1, stdout: '', stderr: `ipsumify: ${message}\nRun "ipsumify --help" for usage.\n` }
@@ -134,7 +137,11 @@ export function run(argv: string[], version = '0.0.0'): RunResult {
     if (positionals.length > 1) {
       throw new RangeError(`Unexpected argument "${positionals[1]}".`)
     }
-    const blocksArg = values.blocks ?? values.paragraphs ?? positionals[0]
+    const blockCounts = [values.blocks, values.paragraphs, positionals[0]].filter(value => value !== undefined)
+    if (blockCounts.length > 1) {
+      throw new RangeError('The number of blocks is given more than once. Use one of: a first argument, --blocks, --paragraphs.')
+    }
+    const blocksArg = blockCounts[0]
 
     const options: IpsumifyOptions = {
       theme: values.theme,
@@ -152,11 +159,11 @@ export function run(argv: string[], version = '0.0.0'): RunResult {
 
     if (values.md !== undefined) {
       for (const name of values.md.split(',').map(part => part.trim()).filter(Boolean)) {
-        const key = MD_NAMES[name]
+        const key = MD_NAMES.get(name)
         if (!key) {
           throw new RangeError(`Invalid --md value "${name}". Valid values: headings, code, quotes, lists, links`)
         }
-        (options as Record<string, unknown>)[key] = true
+        options[key] = true
       }
     }
 

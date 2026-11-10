@@ -119,7 +119,7 @@ export function usePreferences() {
   }
 
   /**
-   * Resets preferences to defaults and clears localStorage.
+   * Removes the saved preferences from localStorage.
    */
   function resetPreferences(): void {
     storage.remove()

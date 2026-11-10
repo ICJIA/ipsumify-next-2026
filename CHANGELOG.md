@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-11-10
+
+The fixes from a red team / blue team exercise run on v2.5.0. The full account, finding by finding, is in the README.
+
+### Security
+- **The API's cache could be poisoned through percent-encoded parameter names.** `?th%65me=dog` was `theme=dog` to the API's query parser and an unknown name to the CDN, which keys its cache on the raw names; the dog-themed text was stored for the URL with no theme. It was reproduced on the live site: any clean API URL could be made to return a different valid response for up to an hour. The API now parses the raw query string itself (`utils/apiQuery.ts`) and decodes nothing: names must be exactly the seven documented ones, each given once, with plain values written one way. Everything else is a 400.
+- **Errors are no longer cached** (`Cache-Control: no-store`), so a bad request cannot store anything against a URL.
+- **v2.5.0's cache-key fix was bypassable** with junk values (`md=anything`, `lower=zz`, `blocks=05`). All are now 400s.
+- **Everything else the function serves now has security headers**, and unknown URLs get a plain 404 in place of the app's HTML shell with status 200 (`server/middleware/guard.ts`).
+- **CI hardened**: read-only token, actions pinned to commit hashes, no persisted checkout credentials, the Codecov secret scoped to its step.
+
+### Changed
+- **API requests are strict.** Unknown parameters, repeated parameters (including `md=a&md=b`, which v2.5.0 joined), percent-encoded or empty values, leading zeros, unknown `md` names, and `lower`/`nowrap` values other than `1` all return 400.
+- **API errors are always JSON**, whatever the `Accept` header, with the body `{ error, statusCode, message }`. The `url` and `statusMessage` fields are gone.
+- `md=headings` is accepted by the API and share links as another name for `headers`, as the command line already did.
+- CI installs the Node version in `.nvmrc`.
+
+### Fixed
+- **A share link with all-default options showed a recipient with saved preferences different text.** Whatever a share link omits is now the default.
+- Share links read `blocks=7abc` as 7.
+- `nowrap` with headings and HTML output put the whole text inside one `<h1>` (API, command line, Copy as HTML).
+- Holding Alt+Shift+D saved the file repeatedly; shortcuts fired with Ctrl or Cmd held; a `keydown` with no key threw.
+- **npm package:** `--md __proto__` and similar were accepted; a conflicting block count was silently dropped; `paragraphs()` rejected a `format` it documents as ignored; non-object options and non-boolean switches are now a `TypeError`; the exported lists are frozen; `require('ipsumify')` works on Node versions that can `require` ES modules.
+- `scripts/write-csp.mjs` wrote a second policy when run twice on one build.
+- `publish.sh` reads the changelog from the release's tag and checks the tag is on origin; `engines` matches Nuxt's supported Node range.
+- Sixteen untrue statements in the README, SECURITY.md, and code comments.
+
+Verified before release: `yarn lint`, `yarn typecheck`, `yarn test:coverage` (128 tests, up from 95), `yarn build`, and `yarn build:cli` exit 0; the API and 404 behaviour were confirmed with requests against a local build; the share-link and keyboard fixes were confirmed in a browser against the production build.
+
 ## [2.5.0] - 2026-11-10
 
 The fixes from the security and logic audit of 10 November 2026, and the generator as an npm package. The audit, with every finding and its fix or mitigation, is in the README.
@@ -146,7 +175,8 @@ Verified locally before release: `yarn install --frozen-lockfile`, `yarn lint`, 
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.2...v2.4.0
 [2.3.2]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.1...v2.3.2

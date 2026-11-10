@@ -24,7 +24,8 @@ set -euo pipefail
 # Before anything is published, it checks that:
 #   - you're in the Ipsumify repository's root, on main (or at the release's tag), up to date with
 #     origin/main, with a clean tree, and logged in to npm and to the GitHub CLI;
-#   - the release exists: the tag v<version> is on this branch, CHANGELOG.md has its section, and
+#   - the release exists: the tag v<version> is on this branch and on origin, the tag's
+#     CHANGELOG.md has its section, and
 #     the CI workflow passed for the tag's commit; and ipsumify@<version> isn't on npm yet;
 #   - the tag's own commit (in a temporary worktree, so nothing later on main leaks in) installs,
 #     builds the package, and passes the unit tests;
@@ -173,8 +174,22 @@ else
   problem "There's no tag $TAG. Make the release first (bump, push, push the tag)."
 fi
 
-# A fixed string, so the dots in the version are dots (^ isn't needed: "## [" starts a section).
-if grep -qF "## [$VERSION]" CHANGELOG.md; then
+# The tag must be on origin too, and be the same commit there: a tag made only on this machine
+# marks a commit nobody else can see.
+if [[ -n "$TAG_COMMIT" ]]; then
+  REMOTE_TAG=$(git ls-remote origin "refs/tags/$TAG^{}" "refs/tags/$TAG" | awk 'END { print $1 }')
+  if [[ -z "$REMOTE_TAG" ]]; then
+    problem "The tag $TAG isn't on origin. Push it first (git push origin $TAG)."
+  elif [[ "$(git rev-parse -q --verify "$REMOTE_TAG^{commit}" 2>/dev/null || echo "$REMOTE_TAG")" != "$TAG_COMMIT" ]]; then
+    problem "The tag $TAG on origin marks a different commit from the one here."
+  else
+    info "The tag $TAG is on origin."
+  fi
+fi
+
+# The release's own changelog, read from the tag (from the working tree only when a dry run has
+# no tag). A fixed string, so the dots in the version are dots.
+if { if [[ -n "$TAG_COMMIT" ]]; then git show "$TAG:CHANGELOG.md"; else cat CHANGELOG.md; fi; } | grep -qF "## [$VERSION]"; then
   info "CHANGELOG.md has a section for $VERSION."
 else
   problem "CHANGELOG.md has no '## [$VERSION]' section."

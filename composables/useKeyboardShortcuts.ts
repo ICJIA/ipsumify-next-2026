@@ -35,9 +35,20 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
    * @param event - The keyboard event
    */
   function handleKeyDown(event: KeyboardEvent) {
+    // Autofill and some input methods dispatch keydown events with no key
+    if (typeof event.key !== 'string') return
+    // A held chord fires repeatedly; one press is one action (holding
+    // Alt+Shift+D used to save the file over and over)
+    if (event.repeat) return
+    // Leave typing alone
+    const target = event.target as HTMLElement | null
+    if (target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName ?? '')) return
+
     for (const shortcut of shortcuts) {
-      const altShiftPressed = event.altKey && event.shiftKey
-      const matchesModifier = shortcut.altShift ? altShiftPressed : true
+      // Exactly the stated modifiers: Ctrl or Cmd with the chord is some
+      // other shortcut, the browser's or the system's
+      const matchesModifier = !event.ctrlKey && !event.metaKey
+        && (shortcut.altShift ? event.altKey && event.shiftKey : !event.altKey)
       // Match on event.key first, then fall back to event.code for letter
       // keys. macOS Option+Shift produces special characters (e.g., ‰ for
       // Option+Shift+R), so event.key won't match the shortcut letter.
@@ -54,19 +65,13 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
     }
   }
 
-  /**
-   * Registers keyboard event listeners on mount and cleans up on unmount.
-   */
+  // onMounted and onUnmounted only ever run in the browser
   onMounted(() => {
-    if (import.meta.client) {
-      window.addEventListener('keydown', handleKeyDown)
-    }
+    window.addEventListener('keydown', handleKeyDown)
   })
 
   onUnmounted(() => {
-    if (import.meta.client) {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
+    window.removeEventListener('keydown', handleKeyDown)
   })
 
   return {
