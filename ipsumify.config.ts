@@ -28,6 +28,8 @@ export const config = {
   url: "https://ipsumify.com",
   /** @type {string} GitHub repository URL */
   github: "https://github.com/ICJIA/ipsumify-next-2026",
+  /** @type {string} Changelog, linked from the footer */
+  changelog: "https://github.com/ICJIA/ipsumify-next-2026/blob/main/CHANGELOG.md",
 
   /** @type {string} Author/organization name */
   author: "ICJIA",
@@ -63,7 +65,7 @@ export const config = {
   ogImageAlt: "Ipsumify - Easily create placeholder text",
 
   /** @type {string} App version - keep in sync with package.json and packages/ipsumify/package.json (a unit test checks) */
-  version: "2.6.0",
+  version: "2.6.1",
 
   /** @type {string} Default theme ID for generator (e.g. lorem, dog, cat) */
   defaultThemeId: "lorem",

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-11-10
+
+### Added
+- **Changelog and GitHub links in the footer**, beside Keyboard Shortcuts. Both open in a new tab. The footer wraps on narrow screens.
+
+The npm package is unchanged in this release and was not republished; `ipsumify@2.6.0` remains the latest on npm.
+
 ## [2.6.0] - 2026-11-10
 
 The fixes from a red team / blue team exercise run on v2.5.0. The full account, finding by finding, is in the README.
@@ -175,7 +182,8 @@ Verified locally before release: `yarn install --frozen-lockfile`, `yarn lint`, 
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.1...HEAD
+[2.6.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.2...v2.4.0

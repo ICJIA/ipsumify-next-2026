@@ -737,16 +737,34 @@ useKeyboardShortcuts([
     <!-- Footer -->
     <footer class="border-t border-[#1a1a1a] px-6 py-6">
       <div
-        class="mx-auto flex max-w-6xl items-center justify-between text-xs text-[#9ca3af]"
+        class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 text-xs text-[#9ca3af]"
       >
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
           <button
             class="flex items-center gap-1 text-[#00d4aa] hover:underline"
             @click="showShortcutsHelp = true"
           >
-            <UIcon name="i-lucide-keyboard" class="h-3 w-3" />
+            <UIcon name="i-lucide-keyboard" class="h-3 w-3" aria-hidden="true" />
             Keyboard Shortcuts
           </button>
+          <a
+            :href="config.changelog"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 text-[#00d4aa] hover:underline"
+          >
+            <UIcon name="i-lucide-history" class="h-3 w-3" aria-hidden="true" />
+            Changelog
+          </a>
+          <a
+            :href="config.github"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="flex items-center gap-1 text-[#00d4aa] hover:underline"
+          >
+            <UIcon name="i-simple-icons-github" class="h-3 w-3" aria-hidden="true" />
+            GitHub
+          </a>
         </div>
         <span class="font-mono">v{{ config.version }}</span>
       </div>

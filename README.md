@@ -528,7 +528,7 @@ ipsumify/
 | Key                                            | Description                                  |
 | ---------------------------------------------- | -------------------------------------------- |
 | `name`, `title`, `description`, `shortDescription` | Site identity and SEO                    |
-| `url`, `github`, `author`                      | URLs and attribution                         |
+| `url`, `github`, `changelog`, `author`         | URLs and attribution; `github` and `changelog` are linked from the footer |
 | `datePublished`, `dateModified`                | ISO dates for the JSON-LD structured data; update `dateModified` by hand on release |
 | `locale`, `defaultLocale`                      | Open Graph locale and HTML `lang`            |
 | `ogImageUrl`, `ogImageWidth`, `ogImageHeight`, `ogImageAlt`, `faviconPath` | Social image and favicon |
