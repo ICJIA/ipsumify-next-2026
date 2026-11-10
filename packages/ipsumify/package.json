@@ -1,0 +1,42 @@
+{
+  "name": "ipsumify",
+  "version": "2.5.0",
+  "description": "Lorem ipsum generator for the command line and Node: markdown-ready placeholder text with themes, seeds, and plain text, HTML or JSON output.",
+  "keywords": [
+    "lorem",
+    "ipsum",
+    "lorem-ipsum",
+    "placeholder",
+    "placeholder-text",
+    "dummy-text",
+    "markdown",
+    "generator",
+    "cli"
+  ],
+  "homepage": "https://ipsumify.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ICJIA/ipsumify-next-2026.git",
+    "directory": "packages/ipsumify"
+  },
+  "bugs": "https://github.com/ICJIA/ipsumify-next-2026/issues",
+  "license": "MIT",
+  "author": "ICJIA",
+  "type": "module",
+  "bin": {
+    "ipsumify": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.3"
+  }
+}

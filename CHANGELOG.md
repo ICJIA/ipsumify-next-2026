@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-11-10
+
+The fixes from the security and logic audit of 10 November 2026, and the generator as an npm package. The audit, with every finding and its fix or mitigation, is in the README.
+
+### Added
+- **`ipsumify` on npm: a command line and a library.** `npx ipsumify` prints five paragraphs of lorem ipsum; options choose the block count, theme, seed, markdown elements (`--headings`, `--code`, `--quotes`, `--lists`, `--links`, `--all`), `--lower`, `--no-linebreaks`, and `--format markdown|text|html|json`. `import ipsumify from 'ipsumify'` does the same in Node. It is the website's engine, bundled with no dependencies: the same seed and options give the same text on the site, in the API, and in the terminal. Source in `packages/ipsumify/`, built by `yarn build:cli`.
+- **`publish.sh`**, which checks a release and publishes the package: clean tree on `main`, tag and changelog section present, CI green for the tag's commit, a build and test of that commit in a temporary worktree, the package's exact contents, and an install-and-run of the packed tarball, before asking for the version to be typed and for npm's approval. `--dry-run` does everything but publish.
+- A build step, `scripts/write-csp.mjs`, that writes the page's Content-Security-Policy from the built HTML and fails the build if the page references a file the build did not write.
+
+### Security
+- **The page's CSP no longer allows arbitrary inline scripts.** `'unsafe-inline'` is replaced by SHA-256 hashes of the page's own inline scripts, computed on every build. Verified in a browser against the production build: the page runs with no violations, and a script injected into it is refused. `connect-src` and `img-src` are narrowed to the site itself and `object-src 'none'` is added. The deprecated `X-XSS-Protection` header is removed.
+- **Icons are bundled, not fetched.** Every first visit used to request icon data from `api.iconify.design`. The page now makes no third-party requests at all.
+- **The API sets its own security headers** (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, a `default-src 'none'` CSP); `netlify.toml`'s never reached it.
+- **The API's cache can no longer be bypassed with a junk parameter.** `Netlify-Vary` keys the CDN cache on the seven documented parameters. There is still no rate limit.
+- **Saved preferences are validated on load.** A corrupt or edited `localStorage` value could throw, or ask for a billion blocks and freeze the page on every visit.
+
+### Fixed
+- **`?md=headers&md=code` returned HTTP 500.** Repeated parameters are now joined with commas.
+- **`format=json` with `md=headers` returned an `output` array that did not match its own `markdown` field** (491 of 500 seeds tested). Both now come from one generation pass.
+- **Negative seeds produced broken text** (`seed=-5000` returned 10 characters). The generator now normalizes any seed, and the API rejects seeds outside 0–2,147,483,647, along with `seed=`, `seed=1e3`, and `blocks=1.0`, which it used to accept. Text for every valid seed is unchanged: 167,310 old-versus-new comparisons across all themes and options found no difference.
+- **`format=text` with `nowrap=1` left `>`, `•`, and `#` markers in the text.**
+- **Opening a share link replaced the visitor's saved preferences.** Nothing is saved until they change a setting; resetting also clears the link's parameters from the address bar.
+- **Alt+Shift+C announced "Copied to clipboard" even when the copy failed.**
+- **Regenerate could leave the text unchanged.** It now draws from all 233,280 seeds and redraws if the text would be the same.
+- **On phones the wordmark overlapped the GitHub link.**
+- **v2.4.0 never deployed.** Its dependency update moved Nuxt to a version that needs Node 22.22.3 or later, while `.nvmrc` pinned 22.14.0, and Netlify's build failed; the site stayed on v2.3.2. `.nvmrc`, `netlify.toml`, and a new `engines` field now agree on 22.23.4. CI did not catch it because it installs the newest Node 22.
+
+Verified locally before release: `yarn lint`, `yarn typecheck`, `yarn test:coverage` (95 tests, up from 58), `yarn build`, and `yarn build:cli` all exit 0; the API fixes were confirmed with requests against a local build; and the page was checked in a browser served with its real CSP header.
+
 ## [2.4.0] - 2026-11-10
 
 ### Added
@@ -117,7 +146,8 @@ Verified locally before release: `yarn install --frozen-lockfile`, `yarn lint`, 
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.2...v2.4.0
 [2.3.2]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.0...v2.3.1

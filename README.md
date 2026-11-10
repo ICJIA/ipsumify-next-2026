@@ -18,6 +18,14 @@ With a theme and the markdown elements switched on:
 
 ![Ipsumify showing the Dog-em Ipsum theme with headers, code snippets, blockquotes, lists, and links enabled](documentation/screenshot-markdown.png)
 
+On the command line, with `npx ipsumify` (the commands' actual output, rendered as an image):
+
+![Terminal output of npx ipsumify with a theme, headings, and a list](documentation/screenshot-cli.png)
+
+On a phone:
+
+<img src="documentation/screenshot-mobile.png" alt="Ipsumify on a phone-sized screen" width="320">
+
 ## Site
 
 https://ipsumify.com
@@ -26,6 +34,7 @@ https://ipsumify.com
 
 - [Features](#features)
 - [Themes](#themes)
+- [Command Line and npm Package](#command-line-and-npm-package)
 - [API](#api)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
@@ -36,6 +45,7 @@ https://ipsumify.com
 - [Architecture](#architecture)
   - [SEO with ssr: false](#seo-with-ssr-false)
 - [Accessibility & Quality Scores](#accessibility--quality-scores)
+- [Security and Logic Audit](#security-and-logic-audit)
 - [Security](#security)
 - [Contributing](#contributing)
 - [License](#license)
@@ -49,6 +59,7 @@ https://ipsumify.com
 - **One-Click Actions** - Regenerate, copy as Markdown or as rendered HTML, or download as an `.md` file, all from the bar above the output
 - **Shareable URLs** - Share your exact settings and seed via URL so others see the same output
 - **Remembered Preferences** - Theme, block count, and options are saved in your browser's `localStorage`; click the Ipsumify logo to reset everything to defaults
+- **Command Line and npm Package** - `npx ipsumify` prints lorem ipsum in your terminal; `import ipsumify from 'ipsumify'` does the same in Node
 - **Public API** - REST endpoint with multiple output formats (markdown, JSON, text, HTML) — no API key required
 - **Deterministic Output** - Seeded RNG produces identical results for the same parameters, enabling CDN caching
 - **Keyboard Shortcuts** - Alt+Shift+R / C / D to regenerate, copy, and download (Option+Shift on Mac); press `?` to list them
@@ -69,6 +80,171 @@ Ipsumify includes the classic Lorem Ipsum as the default, plus several fun theme
 | **BBQ-em Ipsum**          | Latinized barbecue cuts, techniques, and terminology |
 
 Switch themes using the dropdown in the Options panel. All your other settings (blocks, markdown elements, formatting) are preserved when switching themes.
+
+## Command Line and npm Package
+
+The generator is published to npm as [`ipsumify`](https://www.npmjs.com/package/ipsumify).
+
+```bash
+npx ipsumify
+```
+
+With no arguments it prints five paragraphs of classic lorem ipsum. Nothing to install, no dependencies, Node 18.3 or later.
+
+It uses the same engine as [ipsumify.com](https://ipsumify.com) and its API: the same theme, block count, seed, and options give the same text in all three.
+
+### Options
+
+| Option | Short | What it does |
+| ------ | ----- | ------------ |
+| `--blocks <n>` | `-b` | Number of paragraphs, 1–20. Default 5. Also accepted as the first argument (`npx ipsumify 3`) or as `--paragraphs` / `-p` |
+| `--theme <id>` | `-t` | `lorem` (default), `dog`, `cat`, `baked`, `bbq` |
+| `--seed <n>` | `-s` | Whole number from 0 to 2,147,483,647. The same seed always gives the same text. Random when omitted |
+| `--headings` | | Add markdown headings (also `--headers`) |
+| `--code` | | Add code snippets |
+| `--quotes` | | Add blockquotes |
+| `--lists` | | Add bullet lists |
+| `--links` | | Add links |
+| `--all` | `-a` | All five markdown elements |
+| `--md <list>` | | The same, comma-separated, as the API takes them: `--md headings,lists` |
+| `--lower` | | Lowercase everything |
+| `--no-linebreaks` | | Everything on one line (also `--nowrap`) |
+| `--format <name>` | `-f` | `markdown` (default), `text`, `html`, `json` |
+| `--themes` | | List the themes |
+| `--help` | `-h` | Show help |
+| `--version` | `-v` | Show the version |
+
+Code snippets appear before every third block, blockquotes before every second, lists before the third, sixth, and so on, and links before every fourth, so a short run may not include every element you asked for.
+
+Invalid input prints a message to stderr and exits with code 1.
+
+### Examples
+
+One paragraph. `--seed` makes it repeatable; leave it off for different text each run:
+
+```console
+$ npx ipsumify 1 --seed 42
+Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+```
+
+A theme, with headings and a list:
+
+```console
+$ npx ipsumify 3 --theme bbq --headings --lists --seed 7
+# Building the Perfect Fire
+
+Brisketum planum puntum totum, pinguem capsum updownum debatum. Fumus annulus roseum halum, probatum technicum igneum. Sectum contra granum semper, humidus macer finibus ustum. Pullum femur quartum totum, pellis crispum carnem sucum. Alabama salsamentum album, acetum Carolina moppum stylum. Tractum fumatum grillum optiones, gallinaceum rectum bonum.
+
+Fumus surgit caminus ascendit, linea formatur mane fidelis. Venditum signum timendum, mane avis obtinet carneum. Dignum omnis expectatio minutum, pitmasterus ars respectum. Fricatum siccum pasta humidum, pernoctem frigidarium marinatum requiem. Sal piper simplex Texanum, complexum Memphis mixtum secretum. Applicare generosum aequum tegmen, cortex formatur pulchre.
+
+- Smoky goodness
+- Fall off the bone
+- Worth the wait
+
+Lateribus fabae coleslavium paniscornum, caseum macaroni salatum tuberosum. Pickledus cepae jalapeñus, panisalbus butyrum sectum. Completum plateum aequilibratum prandium, carneum stella lateribus sustentum.
+```
+
+One line, lowercase — handy for seed data:
+
+```console
+$ npx ipsumify 1 --theme cat --no-linebreaks --lower --seed 3
+himalayan persicum pointus fluffium, exotic shorthair teddybearum calmicus. ragamuffin largeum sweeticus docilum, selkirk rex curlycoatum sheepii patientum. laperm curlicus wavium uniqueum.
+```
+
+Rendered HTML:
+
+```console
+$ npx ipsumify 1 --all --format html --seed 42
+<h1>Key Concepts</h1>
+<pre><code class="language-javascript">const example = &#39;code&#39;;
+</code></pre>
+<p><a href="https://example.com">Learn more</a> Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+```
+
+Plain text, with the markdown syntax stripped:
+
+```console
+$ npx ipsumify 1 --all --format text --seed 42
+Key Concepts
+
+Learn more Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+```
+
+JSON, in the same shape the API returns. `output` holds each paragraph's body text; `seed` reports the seed that was used, so a random run can be reproduced:
+
+```console
+$ npx ipsumify 2 --format json --seed 42
+{
+  "theme": "lorem",
+  "blocks": 2,
+  "seed": 42,
+  "format": "json",
+  "options": {
+    "headers": false,
+    "codeSnippets": false,
+    "blockquotes": false,
+    "lists": false,
+    "links": false,
+    "capitalize": true,
+    "noWrap": false
+  },
+  "output": [
+    "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+    "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt."
+  ],
+  "markdown": "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.\n\nSed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis. Nam libero tempore, cum soluta nobis est eligendi optio cumque nihil impedit quo minus id quod maxime placeat facere possimus, omnis voluptas assumenda est. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt."
+}
+```
+
+Into a file or the clipboard:
+
+```bash
+npx ipsumify 10 --all > placeholder.md
+npx ipsumify | pbcopy
+```
+
+### Use from JavaScript
+
+```bash
+npm install ipsumify
+```
+
+```js
+import ipsumify, { paragraphs, themes } from 'ipsumify'
+
+ipsumify()                                          // five paragraphs, random
+ipsumify({ blocks: 2, theme: 'dog', seed: 42 })     // repeatable
+ipsumify({ headers: true, lists: true })            // markdown elements
+ipsumify({ format: 'html' })                        // or 'text'
+
+paragraphs({ blocks: 3 })                           // ['…', '…', '…']
+themes                                              // [{ id: 'lorem', label: 'Lorem Ipsum' }, …]
+```
+
+| Option | Type | Default | |
+| ------ | ---- | ------- | - |
+| `theme` | string | `'lorem'` | `lorem`, `dog`, `cat`, `baked`, `bbq` |
+| `blocks` | number | `5` | 1–20 |
+| `seed` | number | random | 0–2,147,483,647 |
+| `headers`, `code`, `quotes`, `lists`, `links` | boolean | `false` | Markdown elements |
+| `lowercase` | boolean | `false` | Lowercase everything |
+| `noWrap` | boolean | `false` | Everything on one line |
+| `format` | string | `'markdown'` | `markdown`, `text`, `html` |
+
+An unknown theme or format, or a `blocks` or `seed` out of range, throws a `RangeError`. The package is ESM only and ships its own TypeScript types.
+
+### Building and publishing the package
+
+The package's source is in `packages/ipsumify/`. `yarn build:cli` bundles it, with the generator and themes from this repository, into `packages/ipsumify/dist/`. It has no dependencies and shares the app's version number.
+
+Publishing is done with `publish.sh`, from a terminal, after a release (version bumped in `package.json`, `ipsumify.config.ts`, and `packages/ipsumify/package.json`; `CHANGELOG.md` section added; `main` and the `vX.Y.Z` tag pushed; CI green):
+
+```bash
+./publish.sh --dry-run   # every check and a dry-run publish; changes nothing
+./publish.sh             # the same checks, then publishes after you type the version and approve in npm
+```
+
+The script builds and tests the tag's own commit in a temporary worktree, checks the package's contents, installs the packed tarball in a scratch project and runs it, and publishes that same tarball. It never commits, tags, or pushes. A release that changes only the website does not need publishing.
 
 ## API
 
@@ -137,7 +313,7 @@ curl "https://ipsumify.com/api/generate?theme=dog&blocks=3"
 | --------- | ------ | ---------- | -------------------------------------------------------------------- |
 | `theme`   | string | `lorem`    | Theme ID: `lorem`, `dog`, `cat`, `baked`, `bbq`                     |
 | `blocks`  | number | `5`        | Number of text blocks (1-20)                                        |
-| `seed`    | number | `42`       | RNG seed for deterministic output. Use a whole number of 0 or more  |
+| `seed`    | number | `42`       | RNG seed for deterministic output: a whole number from 0 to 2,147,483,647 |
 | `format`  | string | `markdown` | Response format: `markdown`, `json`, `text`, `html`                 |
 | `md`      | string | _(none)_   | Comma-separated markdown elements: `headers,code,quotes,lists,links` |
 | `lower`   | string | _(off)_    | Set to `1` to disable capitalization                                |
@@ -173,15 +349,16 @@ Invalid `theme`, `blocks`, `seed`, or `format` values return HTTP 400 with a JSO
 
 ### Known Limitations
 
-- **`format=json` with `md=headers`:** the `output` array can hold different block groupings than the `markdown` field, because headings draw from the same random sequence that sizes the blocks.
-- **`format=text` with `nowrap=1`:** blockquote markers (`>`), bullets (`•`), and heading hashes after the first are left in the text. Without `nowrap`, they are stripped. Code blocks are removed entirely.
-- **Negative seeds** are accepted by the API but produce degraded output (unshuffled or very short text). Share links reject them.
-- **Repeating a parameter** (`?md=headers&md=code`) returns HTTP 500 for `md`. Use the comma-separated form.
-- Seeds repeat every 233,280 values: `seed=42` and `seed=233322` return the same text.
+- **Seeds repeat every 233,280 values:** `seed=42` and `seed=233322` return the same text, and some different seeds give the same text for a short output.
+- **A blockquote repeats the block it precedes:** it quotes the first 100 characters of the block that follows it.
+- **`format=text` drops code snippets** rather than keeping their contents.
+- **No rate limit.** See [Caching and Fair Use](#caching-and-fair-use).
 
 ### Caching and Fair Use
 
 The API is public with no authentication required. Responses, including 400 errors, are cached at the CDN edge (`Cache-Control: public, max-age=3600`) since identical parameters always produce identical output. Repeated requests with the same parameters are served from cache without invoking the serverless function.
+
+Only the seven documented parameters are part of the cache key (`Netlify-Vary`), so adding an unrelated parameter does not bypass the cache. There is no rate limit; each uncached request does a small, bounded amount of work (at most 20 blocks).
 
 The API is intended for use with `curl` and server-side code. Cross-origin browser requests (e.g., `fetch` from another domain) are blocked — no CORS headers are sent.
 
@@ -196,9 +373,9 @@ Ipsumify has two URL formats that serve different purposes:
 | **Use case** | Share a link so someone sees the same text in their browser | Programmatically retrieve generated text |
 | **curl/fetch** | Returns the full HTML page — not useful for text extraction | Returns structured JSON — designed for this |
 
-The share URL and API accept the same query parameters (`theme`, `blocks`, `md`, `lower`, `nowrap`, `seed`). The API additionally accepts `format`. Share Settings always writes the current `seed` into the link, so a link made after Regenerate reproduces the regenerated text. A share link only accepts a `seed` from 0 to 2,147,483,647 and silently ignores any invalid value, where the API returns a 400.
+The share URL and API accept the same query parameters (`theme`, `blocks`, `md`, `lower`, `nowrap`, `seed`). The API additionally accepts `format`. Share Settings always writes the current `seed` into the link, so a link made after Regenerate reproduces the regenerated text. Both accept a `seed` from 0 to 2,147,483,647; a share link silently ignores an invalid value, where the API returns a 400.
 
-Opening a share link applies its settings and saves them as your own preferences, replacing whatever you had saved.
+Opening a share link shows its settings without touching your saved preferences. If you then change a setting, what is on screen becomes your saved preferences. Clicking the logo resets everything and removes the link's parameters from the address bar.
 
 ## Tech Stack
 
@@ -218,7 +395,7 @@ Opening a share link applies its settings and saves them as your own preferences
 
 ### Prerequisites
 
-- Node.js 22.x or higher (see `.nvmrc`)
+- Node.js 22.22.3 or higher (see `.nvmrc`; Nuxt 4.6 requires it)
 - Yarn 1.22.x (or npm/pnpm)
 
 ### Installation
@@ -253,11 +430,12 @@ Use `yarn lint:fix` to auto-fix ESLint issues where possible.
 | Command            | Description                                     |
 | ------------------ | ----------------------------------------------- |
 | `yarn dev`         | Start development server with hot reload        |
-| `yarn build`       | Build for production (hybrid: static pages + serverless API) |
+| `yarn build`       | Build for production (hybrid: static pages + serverless API), then write the page's CSP into `dist/_headers` |
+| `yarn build:cli`   | Build the npm package into `packages/ipsumify/dist/`         |
 | `yarn generate`    | Generate fully static site (no serverless functions)         |
 | `yarn preview`     | Preview production build locally                             |
 | `yarn test`        | Run lint, typecheck, and unit tests                          |
-| `yarn test:all`    | Run lint, typecheck, unit tests, and a production build      |
+| `yarn test:all`    | Run lint, typecheck, unit tests, a production build, and the npm package build |
 | `yarn test:unit`   | Run Vitest unit tests                                        |
 | `yarn test:unit:watch` | Run Vitest in watch mode                                 |
 | `yarn test:coverage` | Run unit tests with a coverage report (what CI runs)       |
@@ -285,6 +463,10 @@ ipsumify/
 │   ├── useLocalStorage.ts      # Type-safe localStorage wrapper
 │   ├── usePreferences.ts       # User preference persistence
 │   └── useShareUrl.ts          # Shareable URL generation
+├── packages/
+│   └── ipsumify/               # The npm package: command line and library
+├── scripts/
+│   └── write-csp.mjs           # Post-build: hashes inline scripts into the CSP
 ├── server/
 │   └── api/
 │       └── generate.get.ts     # GET /api/generate endpoint
@@ -293,7 +475,7 @@ ipsumify/
 │   ├── generate.ts         # Shared text generation (web UI + API)
 │   └── random.ts           # Seeded PRNG utilities
 ├── tests/
-│   └── unit/               # Vitest unit tests (generate, random, useLocalStorage, useShareUrl)
+│   └── unit/               # Vitest unit tests (generate, random, cli, useLocalStorage, usePreferences, useShareUrl)
 ├── documentation/          # Screenshots for README
 ├── public/
 │   ├── icon.svg            # Favicon
@@ -306,6 +488,7 @@ ipsumify/
 ├── netlify.toml           # Netlify build and security headers
 ├── nuxt.config.ts         # Nuxt configuration
 ├── package.json            # Dependencies and scripts
+├── publish.sh              # Checks a release and publishes the npm package
 ├── tsconfig.json           # TypeScript configuration
 └── vitest.config.ts        # Vitest configuration
 ```
@@ -347,7 +530,7 @@ export default defineAppConfig({
 Add a new theme in `data/themes.ts`:
 
 1. Add an object to the `themes` array with `id`, `label`, `icon`, `paragraphs`, `headings`, and `listItems`
-2. Use Iconify icon classes (e.g. `i-lucide-scroll-text`) for the `icon` field
+2. Use a Lucide icon class (e.g. `i-lucide-scroll-text`) for the `icon` field. Icons are compiled into the bundle at build time and never fetched; theme icons are picked up from `data/themes.ts` automatically. An icon from another collection needs its `@iconify-json/*` package installed
 3. Optionally set `defaultThemeId` in `ipsumify.config.ts` to make it the default
 
 ## Deployment
@@ -358,8 +541,8 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 
 - **Build command:** `yarn build`
 - **Publish directory:** `dist`
-- **Node version:** 22 (set in `netlify.toml`)
-- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP, HSTS. Netlify applies these to the static pages; API responses come from the function and carry only its own headers
+- **Node version:** 22.23.4 (set in `netlify.toml`)
+- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS come from `netlify.toml`. The Content-Security-Policy is generated at build time by `scripts/write-csp.mjs`, which hashes the page's inline scripts and appends the policy to `dist/_headers`. Netlify applies all of these to the static pages; the API sets its own headers in `server/api/generate.get.ts`
 - **API:** `server/api/` routes are automatically deployed as Netlify Functions
 
 1. Connect your repository to Netlify
@@ -373,7 +556,7 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 - **Deterministic output:** Uses a seeded LCPRNG so identical parameters always produce identical text (enables aggressive CDN caching)
 - **Config hierarchy:** `ipsumify.config.ts` → `nuxt.config.ts`; theme content lives in `data/themes.ts`
 - **Client-side generation:** The web UI generates text in the browser and never calls the API
-- **One third-party request:** Icons are fetched at runtime from `api.iconify.design` (allowed in the CSP's `connect-src`). Everything else is served from the site's own origin
+- **No third-party requests:** Icons are compiled into the client bundle; the page loads nothing from any other origin, and its CSP allows none
 
 ### SEO with `ssr: false`
 
@@ -391,7 +574,7 @@ If you modify SEO tags, update them in **both** places:
 
 ## Accessibility & Quality Scores
 
-Measured on 10 November 2026 against a local production build of v2.4.0.
+Measured on 10 November 2026 against a local production build of v2.5.0.
 
 ### Lighthouse (desktop)
 
@@ -408,6 +591,45 @@ Measured on 10 November 2026 against a local production build of v2.4.0.
 | -------- | ---------------------- |
 | Desktop  | 0                      |
 | Mobile   | 0                      |
+
+## Security and Logic Audit
+
+**Audit date: 10 November 2026.** The whole codebase was read and the running app and API were probed with edge-case input. Every finding below was reproduced before it was fixed, and each fix was verified afterwards: by unit tests (93, up from 58), by requests against a local build of the API, and in a browser against the production build served with its real headers. All fixes shipped in v2.5.0.
+
+Nothing found was high severity: the app has no accounts, stores no user data on the server, and renders no untrusted HTML.
+
+### Security
+
+| # | Finding | Severity | Status | Fix or mitigation |
+| - | ------- | -------- | ------ | ----------------- |
+| S1 | **351 known advisories in dependencies** (8 critical, 179 high), with 26 Dependabot pull requests unmerged since February | Medium | Fixed (v2.4.0) | Every dependency and CI action updated. `yarn audit` now reports 12, none critical or high; all 12 are in build and lint tooling or in `nuxt-og-image`, which this site disables |
+| S2 | **Repeating a query parameter crashed the API.** `?md=headers&md=code` returned HTTP 500 | Low | Fixed | Repeated values are joined with commas; `md` accepts them and every other parameter rejects them with a 400 |
+| S3 | **The API had almost no security headers.** `netlify.toml` headers reach only static pages | Low | Fixed | The API now sets `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and a `default-src 'none'` CSP itself |
+| S4 | **The CDN cache was trivially bypassed, and there is no rate limit.** Any extra parameter (`?x=1`) or any of 2⁵³ seeds forced a fresh function run | Low | Mitigated | `Netlify-Vary` limits the cache key to the seven real parameters, and `seed` is limited to 0–2,147,483,647. Distinct valid requests still each run the function once; the work per request is small and bounded. A true rate limit would need Netlify's paid rate-limiting rules and is not configured |
+| S5 | **Icons were fetched from `api.iconify.design` on every first visit**, disclosing visitor IPs to a third party and breaking icons if it was down | Low | Fixed | Icons are compiled into the bundle, the fallback fetch is switched off, and the CSP no longer allows that origin |
+| S6 | **The CSP allowed any inline script** (`script-src 'unsafe-inline'`) | Low | Fixed | Inline scripts are allowed by SHA-256 hash, computed from each build's HTML. A script injected into the page is refused; confirmed in a browser. `img-src` no longer allows arbitrary `https:` hosts, and `object-src 'none'` was added |
+| S7 | **`X-XSS-Protection: 1; mode=block`** is deprecated and can introduce problems in old browsers | Info | Fixed | Header removed |
+| S8 | **Saved preferences were trusted as read.** A corrupt or hand-edited `localStorage` value could throw on load, or request a billion blocks and freeze the page on every visit | Low | Fixed | Every field is validated and falls back to its default |
+| S9 | **`style-src` still allows inline styles** | Info | Accepted | Vue and the UI library set element styles at runtime. With no untrusted HTML rendered, the risk is negligible |
+
+### Faulty logic
+
+| # | Finding | Status | Fix |
+| - | ------- | ------ | --- |
+| L1 | **`format=json` disagreed with itself.** With `md=headers`, the `output` array held different blocks from the `markdown` field (491 of 500 seeds tested), because headings draw from the random sequence that sizes the blocks and the array was built by a separate loop | Fixed | One generation pass now produces both. Every `output` entry appears verbatim in `markdown` |
+| L2 | **Negative seeds produced broken text.** `seed=-5000` returned 10 characters; others returned unshuffled or truncated text | Fixed | The generator normalizes any seed into its range, and the API rejects seeds outside 0–2,147,483,647 with a 400, as share links already did. Output for every valid seed is unchanged (167,310 old-versus-new comparisons, no differences) |
+| L3 | **The API accepted `seed=` (as 0), `seed=1e3`, and `blocks=1.0`** | Fixed | `blocks` and `seed` must be plain whole numbers |
+| L4 | **`format=text` with `nowrap=1` left markdown in the text**: `>` markers, `•` bullets, and every heading's `#` after the first | Fixed | Markers are stripped wherever they appear, not only at the start of a line |
+| L5 | **Opening a share link replaced your saved preferences** | Fixed | Nothing is saved until you change a setting yourself. Resetting also removes the link's parameters from the address bar |
+| L6 | **The copy shortcut reported success regardless.** Alt+Shift+C showed "Copied to clipboard" even when the copy failed | Fixed | The message now reflects the result |
+| L7 | **Regenerate could leave the text unchanged**, and drew from 100,000 seeds of a possible 233,280 | Fixed | It draws from the whole range and redraws if the text would not change |
+| L8 | **On phones the "Ipsumify" wordmark ran into the GitHub link** | Fixed | The header scales down below 640px |
+| L9 | **A deploy could not build.** The dependency update moved Nuxt to a version needing Node 22.22.3 or later while `.nvmrc` pinned 22.14.0; Netlify's v2.4.0 deploy failed | Fixed | `.nvmrc`, `netlify.toml`, and `package.json` `engines` now agree on a supported Node version |
+
+### Not changed
+
+- **Seeds repeat every 233,280 values.** This is a property of the generator. Changing it would change the text behind every existing share link and cached API response.
+- **400 responses are cached for an hour**, like successes. The same bad request always gets the same answer.
 
 ## Security
 

@@ -74,6 +74,16 @@ jobs:
         run: |
           test -f dist/index.html
           test -d .netlify/functions-internal/server
+          grep -q "Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-" dist/_headers
+
+      - name: Build the npm package
+        run: yarn build:cli
+
+      - name: Run the npm package
+        run: |
+          test "$(node packages/ipsumify/dist/cli.js --version)" = "$(node -p "require('./package.json').version")"
+          test "$(node packages/ipsumify/dist/cli.js | grep -c .)" = "5"
+          node packages/ipsumify/dist/cli.js 2 --all --format html --seed 42 | grep -q '<h1>'
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7

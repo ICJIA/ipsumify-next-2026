@@ -74,18 +74,22 @@ Ipsumify implements several security measures:
 
 ### Client-Side Security
 
-- No external JavaScript in production; the only third-party request fetches icon data (JSON) from `api.iconify.design`
+- No third-party requests: scripts, styles, fonts, and icons are all served from the site's own origin
+- Inline scripts are allowed by hash only; the Content-Security-Policy is generated from each build (`scripts/write-csp.mjs`)
+- Preferences read from localStorage are validated before use
 - localStorage only (no cookies)
 - No user authentication required
 - No server-side data storage
 - The page is prerendered and static; the only server code is the stateless `GET /api/generate` function, which validates its inputs and reads no user data
 
+The most recent audit, with each finding and its fix, is in the [README](README.md#security-and-logic-audit).
+
 ## Known Limitations
 
 - **LocalStorage**: User preferences stored in browser (can be cleared)
 - **Share URLs**: Settings encoded in URL (visible in browser history)
-- **Security headers on the API**: The headers in `netlify.toml` apply to the static pages; `/api/generate` responses come from a Netlify Function and carry only `X-Content-Type-Options` and HSTS
-- **Public API**: No authentication or rate limiting; responses are CDN-cached for an hour
+- **Public API**: No authentication or rate limiting. Responses are CDN-cached for an hour, keyed on the documented parameters only
+- **Inline styles**: `style-src` allows `'unsafe-inline'`, which the UI library needs
 
 ## Vulnerability Disclosure Policy
 

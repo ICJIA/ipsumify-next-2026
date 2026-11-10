@@ -26,6 +26,12 @@ The public REST API requires no API key. Base endpoint: `https://ipsumify.com/ap
 
 Output formats: `markdown` (default), `json`, `text`, `html`. Themes: `lorem`, `dog`, `cat`, `baked`, `bbq`.
 
+## Command line and npm package
+
+The same generator is on npm as `ipsumify`. `npx ipsumify` prints five paragraphs; options include `--blocks`, `--theme`, `--seed`, `--headings`, `--code`, `--quotes`, `--lists`, `--links`, `--all`, `--lower`, `--no-linebreaks`, and `--format markdown|text|html|json`. In Node: `import ipsumify from 'ipsumify'`.
+
+- [ipsumify on npm](https://www.npmjs.com/package/ipsumify): Command line and JavaScript library
+
 ## Documentation
 
 - [Ipsumify app](https://ipsumify.com): The web-based generator
