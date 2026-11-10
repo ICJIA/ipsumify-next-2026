@@ -617,40 +617,52 @@ useKeyboardShortcuts([
                 aria-hidden="true"
               />
             </button>
-            <div ref="copyMenuRef" class="relative">
+            <div class="flex items-center gap-1">
               <UButton
                 variant="ghost"
                 size="sm"
-                :icon="copied ? 'i-lucide-check' : copyError ? 'i-lucide-x' : 'i-lucide-copy'"
-                trailing-icon="i-lucide-chevron-down"
+                icon="i-lucide-refresh-cw"
                 class="gap-2 text-[#d1d5db] hover:bg-[#1a1a1a] hover:text-[#fafafa]"
-                :aria-label="
-                  copied ? 'Text copied to clipboard' : copyError ? 'Failed to copy' : 'Copy text to clipboard'
-                "
-                @click="toggleCopyMenu"
+                aria-label="Regenerate lorem ipsum text"
+                @click="handleRegenerate"
               >
-                <span :class="copied ? 'text-[#00d4aa]' : copyError ? 'text-red-400' : ''">
-                  {{ copied ? "Copied!" : copyError ? "Failed" : "Copy" }}
-                </span>
+                <span class="hidden sm:inline">Regenerate</span>
               </UButton>
-              <div
-                v-show="showCopyMenu"
-                class="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[#333] bg-[#1a1a1a] py-1 shadow-xl"
-              >
-                <button
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#d1d5db] hover:bg-[#333] hover:text-[#fafafa]"
-                  @click="handleCopyAndClose('markdown')"
+              <div ref="copyMenuRef" class="relative">
+                <UButton
+                  variant="ghost"
+                  size="sm"
+                  :icon="copied ? 'i-lucide-check' : copyError ? 'i-lucide-x' : 'i-lucide-copy'"
+                  trailing-icon="i-lucide-chevron-down"
+                  class="gap-2 text-[#d1d5db] hover:bg-[#1a1a1a] hover:text-[#fafafa]"
+                  :aria-label="
+                    copied ? 'Text copied to clipboard' : copyError ? 'Failed to copy' : 'Copy text to clipboard'
+                  "
+                  @click="toggleCopyMenu"
                 >
-                  <UIcon name="i-lucide-file-text" class="h-4 w-4" aria-hidden="true" />
-                  Copy as Markdown
-                </button>
-                <button
-                  class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#d1d5db] hover:bg-[#333] hover:text-[#fafafa]"
-                  @click="handleCopyAndClose('html')"
+                  <span :class="copied ? 'text-[#00d4aa]' : copyError ? 'text-red-400' : ''">
+                    {{ copied ? "Copied!" : copyError ? "Failed" : "Copy" }}
+                  </span>
+                </UButton>
+                <div
+                  v-show="showCopyMenu"
+                  class="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-[#333] bg-[#1a1a1a] py-1 shadow-xl"
                 >
-                  <UIcon name="i-lucide-code" class="h-4 w-4" aria-hidden="true" />
-                  Copy as HTML
-                </button>
+                  <button
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#d1d5db] hover:bg-[#333] hover:text-[#fafafa]"
+                    @click="handleCopyAndClose('markdown')"
+                  >
+                    <UIcon name="i-lucide-file-text" class="h-4 w-4" aria-hidden="true" />
+                    Copy as Markdown
+                  </button>
+                  <button
+                    class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#d1d5db] hover:bg-[#333] hover:text-[#fafafa]"
+                    @click="handleCopyAndClose('html')"
+                  >
+                    <UIcon name="i-lucide-code" class="h-4 w-4" aria-hidden="true" />
+                    Copy as HTML
+                  </button>
+                </div>
               </div>
             </div>
           </div>

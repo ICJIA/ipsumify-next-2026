@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-11-10
+
+### Added
+- **A Regenerate button in the bar above the output**, beside Copy. It does what the Regenerate button in the Options panel does, without scrolling back to the panel. Below the `sm` breakpoint it shows the icon alone so the bar still fits a phone.
+
+### Changed
+- **Every dependency brought up to date within its declared range**, superseding the 26 Dependabot pull requests that had been open since February. Among them: Nuxt 4.3.1 → 4.6.4, Nuxt UI 4.4.0 → 4.12.0, Vite 7 → 8, h3 1.15.5 → 1.15.11, devalue 5.6.2 → 6.0.3. `happy-dom` moves from 20 to 21 and `@nuxt/eslint` from 1.13.0 to 1.17.0. `yarn audit` went from 351 advisories (8 critical, 179 high) to 12 (none critical or high); the 12 that remain are in build and lint tooling and in `nuxt-og-image`, which this site disables.
+- CI actions: `actions/checkout` and `actions/setup-node` v4 → v6, `actions/upload-artifact` v4 → v7, `codecov/codecov-action` v4 → v6.
+- README screenshots retaken; they now show the current interface, in two views.
+
+### Fixed
+- **README and SECURITY.md statements that were not true.** SECURITY.md described a static site with no server code and "all processing in the browser", though `/api/generate` runs as a Netlify Function, and labelled the advisories URL an email address. The README now documents the API's 400 responses, Copy as HTML, saved preferences, the `?` shortcut, the missing `yarn` scripts and config keys, the runtime request to `api.iconify.design`, and the known limitations of the API listed there.
+
+Verified locally before release: `yarn lint`, `yarn typecheck`, `yarn test:coverage` (58 tests) and `yarn build` all exit 0. On the production build, Lighthouse (desktop) scores 100 in all four categories and axe-core reports 0 WCAG A/AA violations on desktop and mobile; the new button was clicked in a browser and changes the text, and the Copy menu still opens and closes.
+
 ## [2.3.2] - 2026-09-16
 
 Three defects found by the application health check of 16 September 2026.
@@ -102,7 +117,8 @@ Verified locally before release: `yarn install --frozen-lockfile`, `yarn lint`, 
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.2...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.2...v2.4.0
 [2.3.2]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.2.0...v2.3.0

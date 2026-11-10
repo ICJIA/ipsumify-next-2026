@@ -12,8 +12,11 @@
 
 > The friendliest lorem ipsum generator around. Perfect for designers, writers, and anyone who needs placeholder text.
 
-![Ipsumify Screenshot](documentation/screenshot2.jpg)
+![Ipsumify with its default settings: classic lorem ipsum, five blocks](documentation/screenshot.png)
 
+With a theme and the markdown elements switched on:
+
+![Ipsumify showing the Dog-em Ipsum theme with headers, code snippets, blockquotes, lists, and links enabled](documentation/screenshot-markdown.png)
 
 ## Site
 
@@ -33,6 +36,7 @@ https://ipsumify.com
 - [Architecture](#architecture)
   - [SEO with ssr: false](#seo-with-ssr-false)
 - [Accessibility & Quality Scores](#accessibility--quality-scores)
+- [Security](#security)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -42,13 +46,14 @@ https://ipsumify.com
 - **Multiple Themes** - Choose from classic Lorem Ipsum or fun themed alternatives (dog, cat, baked, BBQ)
 - **Customizable Blocks** - Control the number of text blocks (1-20)
 - **Formatting Options** - Toggle capitalization and no-wrap mode for cleaner copy-paste
-- **One-Click Actions** - Copy to clipboard or download as `.md` file
-- **Shareable URLs** - Share your exact settings via URL so others see the same output
+- **One-Click Actions** - Regenerate, copy as Markdown or as rendered HTML, or download as an `.md` file, all from the bar above the output
+- **Shareable URLs** - Share your exact settings and seed via URL so others see the same output
+- **Remembered Preferences** - Theme, block count, and options are saved in your browser's `localStorage`; click the Ipsumify logo to reset everything to defaults
 - **Public API** - REST endpoint with multiple output formats (markdown, JSON, text, HTML) — no API key required
 - **Deterministic Output** - Seeded RNG produces identical results for the same parameters, enabling CDN caching
-- **Keyboard Shortcuts** - Alt+Shift shortcuts for regenerate, copy, and download (Option+Shift on Mac)
+- **Keyboard Shortcuts** - Alt+Shift+R / C / D to regenerate, copy, and download (Option+Shift on Mac); press `?` to list them
 - **Dark Theme** - Beautiful dark UI optimized for developers and designers
-- **Fully Accessible** - 100% Lighthouse accessibility score
+- **Accessible** - Lighthouse accessibility score of 100 and zero axe-core WCAG A/AA violations
 - **SEO Optimized** - Built-in sitemap, robots.txt, and meta tags
 
 ## Themes
@@ -132,7 +137,7 @@ curl "https://ipsumify.com/api/generate?theme=dog&blocks=3"
 | --------- | ------ | ---------- | -------------------------------------------------------------------- |
 | `theme`   | string | `lorem`    | Theme ID: `lorem`, `dog`, `cat`, `baked`, `bbq`                     |
 | `blocks`  | number | `5`        | Number of text blocks (1-20)                                        |
-| `seed`    | number | `42`       | RNG seed for deterministic output                                   |
+| `seed`    | number | `42`       | RNG seed for deterministic output. Use a whole number of 0 or more  |
 | `format`  | string | `markdown` | Response format: `markdown`, `json`, `text`, `html`                 |
 | `md`      | string | _(none)_   | Comma-separated markdown elements: `headers,code,quotes,lists,links` |
 | `lower`   | string | _(off)_    | Set to `1` to disable capitalization                                |
@@ -152,11 +157,31 @@ All responses return JSON with this structure:
 }
 ```
 
-The `json` format additionally includes `options` and returns `output` as an array of strings (one per block) plus a `markdown` field with the full text.
+The `json` format additionally includes `options` and returns `output` as an array of strings (one per block of body text, without markdown elements) plus a `markdown` field with the full text.
+
+Invalid `theme`, `blocks`, `seed`, or `format` values return HTTP 400 with a JSON body whose `message` says what was wrong:
+
+```json
+{
+  "error": true,
+  "url": "https://ipsumify.com/api/generate?theme=zzz",
+  "statusCode": 400,
+  "statusMessage": "Invalid theme \"zzz\". Valid themes: lorem, dog, cat, baked, bbq",
+  "message": "Invalid theme \"zzz\". Valid themes: lorem, dog, cat, baked, bbq"
+}
+```
+
+### Known Limitations
+
+- **`format=json` with `md=headers`:** the `output` array can hold different block groupings than the `markdown` field, because headings draw from the same random sequence that sizes the blocks.
+- **`format=text` with `nowrap=1`:** blockquote markers (`>`), bullets (`•`), and heading hashes after the first are left in the text. Without `nowrap`, they are stripped. Code blocks are removed entirely.
+- **Negative seeds** are accepted by the API but produce degraded output (unshuffled or very short text). Share links reject them.
+- **Repeating a parameter** (`?md=headers&md=code`) returns HTTP 500 for `md`. Use the comma-separated form.
+- Seeds repeat every 233,280 values: `seed=42` and `seed=233322` return the same text.
 
 ### Caching and Fair Use
 
-The API is public with no authentication required. Responses are cached at the CDN edge (`Cache-Control: public, max-age=3600`) since identical parameters always produce identical output. Repeated requests with the same parameters are served from cache without invoking the serverless function.
+The API is public with no authentication required. Responses, including 400 errors, are cached at the CDN edge (`Cache-Control: public, max-age=3600`) since identical parameters always produce identical output. Repeated requests with the same parameters are served from cache without invoking the serverless function.
 
 The API is intended for use with `curl` and server-side code. Cross-origin browser requests (e.g., `fetch` from another domain) are blocked — no CORS headers are sent.
 
@@ -171,7 +196,9 @@ Ipsumify has two URL formats that serve different purposes:
 | **Use case** | Share a link so someone sees the same text in their browser | Programmatically retrieve generated text |
 | **curl/fetch** | Returns the full HTML page — not useful for text extraction | Returns structured JSON — designed for this |
 
-The share URL and API accept the same query parameters (`theme`, `blocks`, `md`, `lower`, `nowrap`, `seed`). The API additionally accepts `format`. Share Settings always writes the current `seed` into the link, so a link made after Regenerate reproduces the regenerated text.
+The share URL and API accept the same query parameters (`theme`, `blocks`, `md`, `lower`, `nowrap`, `seed`). The API additionally accepts `format`. Share Settings always writes the current `seed` into the link, so a link made after Regenerate reproduces the regenerated text. A share link only accepts a `seed` from 0 to 2,147,483,647 and silently ignores any invalid value, where the API returns a 400.
+
+Opening a share link applies its settings and saves them as your own preferences, replacing whatever you had saved.
 
 ## Tech Stack
 
@@ -183,6 +210,8 @@ The share URL and API accept the same query parameters (`theme`, `blocks`, `md`,
 | [TypeScript](https://www.typescriptlang.org/) | 5.x     | Type-safe JavaScript                       |
 | [@nuxtjs/seo](https://nuxtseo.com/)           | 3.x     | SEO module with sitemap and robots.txt     |
 | [@nuxt/eslint](https://eslint.nuxt.com/)      | 1.x     | ESLint integration with Nuxt flat config   |
+| [marked](https://marked.js.org/)              | 17.x    | Markdown-to-HTML for Copy as HTML and the API's `html` format |
+| [Vitest](https://vitest.dev/)                 | 4.x     | Unit tests (with happy-dom)                |
 | [Lucide Icons](https://lucide.dev/)           | -       | Beautiful open-source icons                |
 
 ## Getting Started
@@ -228,7 +257,11 @@ Use `yarn lint:fix` to auto-fix ESLint issues where possible.
 | `yarn generate`    | Generate fully static site (no serverless functions)         |
 | `yarn preview`     | Preview production build locally                             |
 | `yarn test`        | Run lint, typecheck, and unit tests                          |
+| `yarn test:all`    | Run lint, typecheck, unit tests, and a production build      |
 | `yarn test:unit`   | Run Vitest unit tests                                        |
+| `yarn test:unit:watch` | Run Vitest in watch mode                                 |
+| `yarn test:coverage` | Run unit tests with a coverage report (what CI runs)       |
+| `yarn test:ui`     | Open the Vitest UI                                           |
 | `yarn lint`        | Run ESLint on the codebase                                   |
 | `yarn lint:fix`    | Run ESLint with auto-fix                                     |
 | `yarn typecheck`   | Run TypeScript type checking                                 |
@@ -260,18 +293,21 @@ ipsumify/
 │   ├── generate.ts         # Shared text generation (web UI + API)
 │   └── random.ts           # Seeded PRNG utilities
 ├── tests/
-│   └── unit/               # Vitest unit tests
+│   └── unit/               # Vitest unit tests (generate, random, useLocalStorage, useShareUrl)
 ├── documentation/          # Screenshots for README
 ├── public/
 │   ├── icon.svg            # Favicon
+│   ├── llms.txt            # Site and API summary for LLMs (llmstxt.org)
 │   └── og-image.png        # Open Graph image for social sharing
+├── .github/                # CI workflow, Dependabot config, issue and PR templates
 ├── app.config.ts           # Nuxt UI colors (primary, neutral)
 ├── eslint.config.mjs      # ESLint flat config (auto-generated by @nuxt/eslint)
 ├── ipsumify.config.ts     # Single source of truth for all app config
 ├── netlify.toml           # Netlify build and security headers
 ├── nuxt.config.ts         # Nuxt configuration
 ├── package.json            # Dependencies and scripts
-└── tsconfig.json           # TypeScript configuration
+├── tsconfig.json           # TypeScript configuration
+└── vitest.config.ts        # Vitest configuration
 ```
 
 ## Configuration
@@ -280,12 +316,15 @@ ipsumify/
 
 | Key                                            | Description                                  |
 | ---------------------------------------------- | -------------------------------------------- |
-| `name`, `title`, `description`                 | Site identity and SEO                        |
-| `url`, `github`                                | URLs                                         |
+| `name`, `title`, `description`, `shortDescription` | Site identity and SEO                    |
+| `url`, `github`, `author`                      | URLs and attribution                         |
+| `datePublished`, `dateModified`                | ISO dates for the JSON-LD structured data; update `dateModified` by hand on release |
+| `locale`, `defaultLocale`                      | Open Graph locale and HTML `lang`            |
+| `ogImageUrl`, `ogImageWidth`, `ogImageHeight`, `ogImageAlt`, `faviconPath` | Social image and favicon |
 | `primaryColor`, `backgroundColor`, `tileColor` | Theme colors (hex)                           |
 | `defaultThemeId`                               | Default theme (lorem, dog, cat, baked, bbq)  |
 | `defaultBlocks`                                | Default number of text blocks (1-20)         |
-| `defaultSeed`                                  | Initial RNG seed for SSR-safe hydration      |
+| `defaultSeed`                                  | Seed used on first load, after a reset, and by the API when none is given |
 | `version`                                      | App version (keep in sync with package.json) |
 
 ### Theme Colors (Nuxt UI)
@@ -320,7 +359,7 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 - **Build command:** `yarn build`
 - **Publish directory:** `dist`
 - **Node version:** 22 (set in `netlify.toml`)
-- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, CSP, HSTS
+- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, CSP, HSTS. Netlify applies these to the static pages; API responses come from the function and carry only its own headers
 - **API:** `server/api/` routes are automatically deployed as Netlify Functions
 
 1. Connect your repository to Netlify
@@ -333,10 +372,12 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 - **Shared generation logic:** Both the web UI and API use `utils/generate.ts` — same code, same output
 - **Deterministic output:** Uses a seeded LCPRNG so identical parameters always produce identical text (enables aggressive CDN caching)
 - **Config hierarchy:** `ipsumify.config.ts` → `nuxt.config.ts`; theme content lives in `data/themes.ts`
+- **Client-side generation:** The web UI generates text in the browser and never calls the API
+- **One third-party request:** Icons are fetched at runtime from `api.iconify.design` (allowed in the CSP's `connect-src`). Everything else is served from the site's own origin
 
 ### SEO with `ssr: false`
 
-SSR is disabled because reka-ui (used by Nuxt UI v4) crashes during server-side rendering. This means `useSeoMeta()` in page components only runs client-side — crawlers and SEO audit tools see the raw HTML shell without Open Graph, Twitter Card, or canonical tags.
+SSR is disabled because reka-ui (used by Nuxt UI v4) crashed during server-side rendering when the app was built. This means `useSeoMeta()` in page components only runs client-side — without further work, crawlers and SEO audit tools would see a raw HTML shell without Open Graph, Twitter Card, or canonical tags.
 
 **Solution:** All SEO meta tags are defined explicitly in `app.head` inside `nuxt.config.ts` rather than relying on `useSeoMeta()`. Tags defined in `app.head` are baked into the prerendered HTML at build time, so they're visible to crawlers without JavaScript execution.
 
@@ -344,28 +385,37 @@ If you modify SEO tags, update them in **both** places:
 - `nuxt.config.ts` → `app.head.meta` (for crawlers)
 - `app/pages/index.vue` → `useSeoMeta()` (for client-side SPA navigation)
 
+`app/app.vue` adds two client-side corrections for `@nuxtjs/seo` under `ssr: false`: an absolute `rel=canonical` (the module would otherwise emit a relative one), and a plain `%s` title template (the module's default leaves a literal `%siteName` in the tab title).
+
 **Note:** The `@nuxtjs/seo` module's `nuxt-seo-utils` auto-detects files like `og-image.png` in the `public/` directory and injects `og:image` tags with relative paths. To prevent this, ensure `app.head` already includes an `og:image` tag with an absolute URL — the module skips auto-injection when it detects an existing tag.
 
 ## Accessibility & Quality Scores
 
-### Lighthouse
+Measured on 10 November 2026 against a local production build of v2.4.0.
+
+### Lighthouse (desktop)
 
 | Category       | Score |
 | -------------- | ----- |
+| Performance    | 100   |
 | Accessibility  | 100   |
 | Best Practices | 100   |
 | SEO            | 100   |
 
 ### axe-core
 
-| Metric     | Result |
-| ---------- | ------ |
-| Violations | 0      |
-| Passes     | 37     |
+| Viewport | WCAG A + AA violations |
+| -------- | ---------------------- |
+| Desktop  | 0                      |
+| Mobile   | 0                      |
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for how to report a vulnerability and for the security measures in place.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)

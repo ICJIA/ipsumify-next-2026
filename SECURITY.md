@@ -19,8 +19,8 @@ We take the security of Ipsumify seriously. If you discover a security vulnerabi
 
 Instead, please report them by:
 
-1. **Email**: Send details to https://github.com/ICJIA/ipsumify-next-2026/security/advisories
-2. **Subject**: Include "SECURITY" in the subject line
+1. **Private advisory**: Open one at https://github.com/ICJIA/ipsumify-next-2026/security/advisories
+2. **Title**: Include "SECURITY" in the title
 3. **Details**: Provide as much information as possible:
    - Type of vulnerability
    - Steps to reproduce
@@ -74,17 +74,18 @@ Ipsumify implements several security measures:
 
 ### Client-Side Security
 
-- No external JavaScript dependencies in production
+- No external JavaScript in production; the only third-party request fetches icon data (JSON) from `api.iconify.design`
 - localStorage only (no cookies)
 - No user authentication required
 - No server-side data storage
-- Static site generation (no server vulnerabilities)
+- The page is prerendered and static; the only server code is the stateless `GET /api/generate` function, which validates its inputs and reads no user data
 
 ## Known Limitations
 
 - **LocalStorage**: User preferences stored in browser (can be cleared)
 - **Share URLs**: Settings encoded in URL (visible in browser history)
-- **Client-Side Only**: All processing happens in browser
+- **Security headers on the API**: The headers in `netlify.toml` apply to the static pages; `/api/generate` responses come from a Netlify Function and carry only `X-Content-Type-Options` and HSTS
+- **Public API**: No authentication or rate limiting; responses are CDN-cached for an hour
 
 ## Vulnerability Disclosure Policy
 
@@ -104,7 +105,7 @@ We regularly monitor and update dependencies for security vulnerabilities:
 ## Contact
 
 For security concerns, contact:
-- Email: https://github.com/ICJIA/ipsumify-next-2026/security/advisories
+- Private advisory: https://github.com/ICJIA/ipsumify-next-2026/security/advisories
 - GitHub: @ICJIA (for general inquiries only, not vulnerabilities)
 
 ---
