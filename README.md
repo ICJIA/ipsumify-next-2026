@@ -48,6 +48,8 @@ https://ipsumify.com
 - [Themes](#themes)
 - [Command Line and npm Package](#command-line-and-npm-package)
 - [API](#api)
+  - [Strict requests](#strict-requests)
+  - [Caching and Fair Use](#caching-and-fair-use)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
@@ -57,10 +59,14 @@ https://ipsumify.com
 - [Architecture](#architecture)
   - [SEO with ssr: false](#seo-with-ssr-false)
 - [Accessibility & Quality Scores](#accessibility--quality-scores)
+- [Security Policy](#security-policy)
 - [Security and Logic Audits](#security-and-logic-audits)
-- [Security](#security)
+  - [Red team / blue team exercise (10 November 2026)](#red-team--blue-team-exercise-10-november-2026)
+  - [Security and logic audit (10 November 2026)](#security-and-logic-audit-10-november-2026)
+  - [Application health check (16 September 2026)](#application-health-check-16-september-2026)
 - [Contributing](#contributing)
 - [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ## Features
 
@@ -634,6 +640,22 @@ Measured on 10 November 2026 against the live site, https://ipsumify.com, runnin
 | Desktop  | 0                      |
 | Mobile   | 0                      |
 
+## Security Policy
+
+**Reporting a vulnerability.** Please do not open a public issue. Open a private advisory at [github.com/ICJIA/ipsumify-next-2026/security/advisories](https://github.com/ICJIA/ipsumify-next-2026/security/advisories). [SECURITY.md](SECURITY.md) has the full policy, including what to include and when to expect a reply.
+
+**What is in place.**
+
+- No accounts, no cookies, and no user data kept on a server. Settings stay in the browser's `localStorage` and are validated when read back.
+- No requests to any other site: scripts, styles, fonts, and icons are all served from `ipsumify.com`.
+- A Content-Security-Policy that allows the pages' inline scripts only by SHA-256 hash, computed on every build.
+- An API that parses its query string strictly, caches only well-formed requests, and sets its own security headers.
+- A plain 404 for unknown URLs, and security headers on everything the server function returns.
+- An npm package with no dependencies and no install scripts, published only after the release script has installed and run the exact file it publishes.
+- CI with a read-only token and actions pinned to commit hashes.
+
+**How it has been tested.** Each audit, with every finding and its fix, is in the next section.
+
 ## Security and Logic Audits
 
 Newest first. The most recent is given in full; earlier ones are summarised, with every finding kept.
@@ -734,10 +756,6 @@ A check of the build, CI, and the app in a browser. Released in v2.3.0 to v2.3.2
 | H3 | A share link made after Regenerate showed the recipient different words, because links did not carry the seed | Fixed: the seed is in the link, range-checked on the way in |
 | H4 | CI built with a command Netlify never runs and uploaded a directory that did not exist, reporting success; a failing coverage upload was hidden | Fixed: CI runs the real build, checks its output, and fails loudly |
 | H5 | An unused Docker deployment path, and a README that named the wrong Netlify publish directory | Removed and corrected |
-
-## Security
-
-See [SECURITY.md](SECURITY.md) for how to report a vulnerability and for the security measures in place.
 
 ## Contributing
 
