@@ -13,7 +13,7 @@
  *
  * @module server/middleware/guard
  */
-import { defineEventHandler, setResponseHeader, setResponseHeaders, setResponseStatus } from 'h3'
+import { defineEventHandler, sendRedirect, setResponseHeader, setResponseHeaders, setResponseStatus } from 'h3'
 
 /** Paths the function has a real answer for. */
 const SERVED = new Set(['/', '/technical-details', '/api/generate', '/robots.txt', '/sitemap.xml'])
@@ -30,6 +30,10 @@ export default defineEventHandler((event) => {
   })
 
   const path = event.path.split('?')[0] ?? '/'
+  // One address per page: the same path with a trailing slash goes to it
+  if (path.length > 1 && path.endsWith('/') && SERVED.has(path.slice(0, -1))) {
+    return sendRedirect(event, path.slice(0, -1), 301)
+  }
   if (SERVED.has(path) || SERVED_PREFIXES.some(prefix => path.startsWith(prefix))) {
     return
   }

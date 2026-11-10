@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.1] - 2026-11-10
+
+### Fixed
+- **`/technical-details` answered with a redirect to `/technical-details/`**, so the page's canonical URL and its sitemap entry both pointed at an address that redirects. The page is now built as `technical-details.html`, which Netlify serves at `/technical-details` directly; the trailing-slash form redirects to it. Found by checking the live site after v2.7.0.
+
 ## [2.7.0] - 2026-11-10
 
 ### Added
@@ -196,7 +201,8 @@ Verified locally before release: `yarn install --frozen-lockfile`, `yarn lint`, 
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.7.0...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.7.1...HEAD
+[2.7.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.1...v2.7.0
 [2.6.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.5.0...v2.6.0

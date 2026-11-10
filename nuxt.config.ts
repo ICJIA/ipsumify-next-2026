@@ -38,6 +38,12 @@ export default defineNuxtConfig({
   ssr: false,
   nitro: {
     preset: 'netlify',
+    // Write technical-details.html, not technical-details/index.html. Netlify
+    // answers /technical-details with a redirect to /technical-details/ for a
+    // folder, which made the page's canonical URL one that redirects.
+    prerender: {
+      autoSubfolderIndex: false
+    },
     hooks: {
       // With ssr: false every prerendered page is the same shell, with the
       // head from app.head below: the home page's title, description and
