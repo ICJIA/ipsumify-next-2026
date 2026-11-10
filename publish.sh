@@ -210,9 +210,10 @@ info "Checking out $BUILD_AT in a temporary worktree..."
 git -c core.autocrlf=false -c core.eol=lf worktree add --quiet --detach "$WORKTREE" "$BUILD_AT"
 (
   cd "$WORKTREE"
-  # No install scripts: building and testing the package needs none (the repository's own
-  # postinstall prepares Nuxt, which the package doesn't use).
+  # No dependency's install script runs. The one script that is needed is the repository's own
+  # postinstall, run here by name: it writes .nuxt/tsconfig.json, which the tests' compiler reads.
   yarn install --frozen-lockfile --ignore-scripts --silent
+  yarn --silent nuxt prepare
   yarn --silent build:cli
   yarn --silent test:unit
 ) || die "The install, the build, or the tests failed at $BUILD_AT."
