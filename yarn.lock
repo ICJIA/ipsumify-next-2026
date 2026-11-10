@@ -840,6 +840,13 @@
   dependencies:
     "@iconify/types" "*"
 
+"@iconify-json/simple-icons@^1.2.102":
+  version "1.2.102"
+  resolved "https://registry.yarnpkg.com/@iconify-json/simple-icons/-/simple-icons-1.2.102.tgz#e9164ff48451e9b596b88e187d128ed0bb750867"
+  integrity sha512-IwbAj1ZI6LBy+qU7sVYxB1wgbSSIDKjY9I0BnnpjfIdlqfXoYnBb80UvYA0WkodUFWfQyL4AjaKMg48fqX8sIw==
+  dependencies:
+    "@iconify/types" "*"
+
 "@iconify/collections@^1.0.755":
   version "1.0.763"
   resolved "https://registry.yarnpkg.com/@iconify/collections/-/collections-1.0.763.tgz#b34c15eb3130377c25a01fe4661e65c94ee5d2b6"

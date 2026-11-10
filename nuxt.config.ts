@@ -8,6 +8,7 @@
  * @module nuxt.config
  */
 import config from './ipsumify.config'
+import { themes } from './data/themes'
 
 /** @type {import('nuxt/schema').NuxtConfig} */
 export default defineNuxtConfig({
@@ -37,6 +38,19 @@ export default defineNuxtConfig({
   ssr: false,
   nitro: {
     preset: 'netlify'
+  },
+
+  // Icons are compiled into the client bundle and never fetched. `scan` finds
+  // the names written in templates; the theme icons are chosen at runtime from
+  // data/themes.ts, which the scan does not read, so they are listed. With
+  // `provider: 'none'` a name missing from the bundle renders nothing rather
+  // than calling api.iconify.design — add new theme icons here.
+  icon: {
+    provider: 'none',
+    clientBundle: {
+      scan: true,
+      icons: themes.map(t => t.icon.replace(/^i-([a-z0-9]+(?:-icons)?)-/, '$1:'))
+    }
   },
 
   // Robots configuration
@@ -134,7 +148,8 @@ export default defineNuxtConfig({
               'Customizable block count, capitalization, and no-wrap mode',
               'One-click copy to clipboard or download as a Markdown file',
               'Shareable URLs that encode your exact settings',
-              'Free public REST API with markdown, JSON, text, and HTML output'
+              'Free public REST API with markdown, JSON, text, and HTML output',
+              'Command line and npm package: npx ipsumify'
             ]
           })
         }

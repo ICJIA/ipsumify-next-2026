@@ -37,20 +37,24 @@ export const DEFAULT_OPTIONS: GenerateOptions = {
 }
 
 /**
- * Generates lorem ipsum text with optional markdown elements.
+ * The one generation pass behind both generateText and generateBlocks.
  *
- * Deterministic: same params always produce the same output.
+ * Headings draw from the same random sequence that sizes the blocks, so the
+ * body blocks can only be known by running the whole pass. A separate loop
+ * that replayed just the block sizes returned different blocks from the ones
+ * in the text whenever headers were on.
  *
  * @param params - Generation parameters (theme, blocks, seed, options)
- * @returns The generated markdown/text string
+ * @returns The full text, and the body text of each block in order
  */
-export function generateText(params: GenerateParams): string {
+function generate(params: GenerateParams): { text: string, blocks: string[] } {
   const { theme, blocks, seed, options } = params
   const paragraphs = shuffleWithSeed(theme.paragraphs, seed)
   const headings = shuffleWithSeed(theme.headings, seed + SEED_OFFSETS.HEADINGS)
   const listItems = theme.listItems
   const rng = seededRandom(seed + SEED_OFFSETS.BLOCK_SIZES)
   const blockSeparator = options.noWrap ? ' ' : '\n\n'
+  const bodyBlocks: string[] = []
   let output = ''
   let paragraphIndex = 0
   let headingIndex = 0
@@ -83,6 +87,7 @@ export function generateText(params: GenerateParams): string {
     }
 
     blockContent = blockContent.trim()
+    bodyBlocks.push(blockContent)
 
     if (options.headers) {
       if (i === 0) {
@@ -148,36 +153,53 @@ export function generateText(params: GenerateParams): string {
     output = output.slice(0, -2)
   }
 
-  return output
+  return { text: output, blocks: bodyBlocks }
 }
 
 /**
- * Generates text and splits it into individual blocks.
- * Used by the JSON API format.
+ * Generates lorem ipsum text with optional markdown elements.
+ *
+ * Deterministic: same params always produce the same output.
+ *
+ * @param params - Generation parameters (theme, blocks, seed, options)
+ * @returns The generated markdown/text string
+ */
+export function generateText(params: GenerateParams): string {
+  return generate(params).text
+}
+
+/**
+ * Generates text and returns the body of each block on its own, without
+ * headings, code, quotes, lists or links. Every entry appears verbatim in
+ * generateText's output for the same params. Used by the JSON API format.
  *
  * @param params - Generation parameters
  * @returns Array of individual text blocks
  */
 export function generateBlocks(params: GenerateParams): string[] {
-  const { theme, blocks, seed, options } = params
-  const paragraphs = shuffleWithSeed(theme.paragraphs, seed)
-  const rng = seededRandom(seed + SEED_OFFSETS.BLOCK_SIZES)
-  const result: string[] = []
-  let paragraphIndex = 0
+  return generate(params).blocks
+}
 
-  for (let i = 0; i < blocks; i++) {
-    const blockSize = rng.nextInt(1, 3)
-    let blockContent = ''
-
-    for (let j = 0; j < blockSize; j++) {
-      const rawSentence = paragraphs[paragraphIndex % paragraphs.length] ?? ''
-      paragraphIndex++
-      const sentence = options.capitalize ? rawSentence : rawSentence.toLowerCase()
-      blockContent += sentence + ' '
-    }
-
-    result.push(blockContent.trim())
-  }
-
-  return result
+/**
+ * Strips the markdown that generateText writes, leaving plain text.
+ *
+ * In no-wrap mode everything is on one line, so a heading's hashes, a quote's
+ * ">" and a list's bullets sit mid-line; they are matched after any
+ * whitespace, not only at the start of a line. Theme text contains none of
+ * these markers, so only generated syntax is removed. Code is dropped whole.
+ *
+ * @param markdown - Text produced by generateText
+ * @returns The same text without markdown syntax
+ */
+export function markdownToPlainText(markdown: string): string {
+  return markdown
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]*`/g, '')
+    .replace(/(^|\s)#{1,6}[ \t]+/g, '$1')
+    .replace(/(^|\s)>[ \t]+/g, '$1')
+    .replace(/(^|\s)[-*•][ \t]+/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
 }

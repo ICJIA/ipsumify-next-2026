@@ -4,7 +4,7 @@
  * @module tests/unit/random
  */
 import { describe, it, expect } from 'vitest'
-import { seededRandom, shuffleWithSeed, SEED_OFFSETS } from '../../utils/random'
+import { seededRandom, shuffleWithSeed, normalizeSeed, SEED_OFFSETS, SEED_PERIOD, MAX_SEED } from '../../utils/random'
 
 describe('seededRandom', () => {
   it('should generate deterministic values for the same seed', () => {
@@ -127,5 +127,53 @@ describe('SEED_OFFSETS', () => {
     Object.values(SEED_OFFSETS).forEach((offset) => {
       expect(offset).toBeGreaterThan(0)
     })
+  })
+})
+
+describe('normalizeSeed', () => {
+  it('leaves seeds inside the period unchanged', () => {
+    expect(normalizeSeed(0)).toBe(0)
+    expect(normalizeSeed(42)).toBe(42)
+    expect(normalizeSeed(SEED_PERIOD - 1)).toBe(SEED_PERIOD - 1)
+  })
+
+  it('wraps larger and negative seeds into the period', () => {
+    expect(normalizeSeed(SEED_PERIOD)).toBe(0)
+    expect(normalizeSeed(SEED_PERIOD + 42)).toBe(42)
+    expect(normalizeSeed(-1)).toBe(SEED_PERIOD - 1)
+    expect(normalizeSeed(MAX_SEED)).toBe(MAX_SEED % SEED_PERIOD)
+  })
+
+  it('turns fractions and non-numbers into whole seeds', () => {
+    expect(normalizeSeed(42.9)).toBe(42)
+    expect(normalizeSeed(Number.NaN)).toBe(0)
+    expect(normalizeSeed(Number.POSITIVE_INFINITY)).toBe(0)
+  })
+})
+
+describe('negative seeds', () => {
+  it('never yields a value outside 0 to 1', () => {
+    const rng = seededRandom(-5000)
+    for (let i = 0; i < 1000; i++) {
+      const value = rng.next()
+      expect(value).toBeGreaterThanOrEqual(0)
+      expect(value).toBeLessThan(1)
+    }
+  })
+
+  it('keeps nextInt inside its bounds', () => {
+    const rng = seededRandom(-5000)
+    for (let i = 0; i < 1000; i++) {
+      const value = rng.nextInt(1, 3)
+      expect(value).toBeGreaterThanOrEqual(1)
+      expect(value).toBeLessThanOrEqual(3)
+    }
+  })
+
+  it('shuffles without losing or inventing items', () => {
+    const items = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+    for (const seed of [-1, -6, -7, -1000, -5000]) {
+      expect([...shuffleWithSeed(items, seed)].sort()).toEqual(items)
+    }
   })
 })

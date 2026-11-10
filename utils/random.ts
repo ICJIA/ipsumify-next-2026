@@ -13,6 +13,33 @@ const LCPRNG_INCREMENT = 49297
 const LCPRNG_MODULUS = 233280
 
 /**
+ * Largest seed the app accepts, from a share link or the API. Seeds are whole
+ * numbers from 0 to this value.
+ */
+export const MAX_SEED = 2_147_483_647
+
+/**
+ * Brings any number into the generator's state range, 0 to LCPRNG_MODULUS - 1.
+ *
+ * The generator only ever works modulo LCPRNG_MODULUS, so for a whole number
+ * of 0 or more this changes nothing about the sequence. It exists for the
+ * values that used to break it: a negative seed left the state negative
+ * (JavaScript's % keeps the sign), which sent shuffle indexes below zero, and
+ * a fraction or NaN did worse.
+ *
+ * @param seedValue - Any number
+ * @returns A whole number from 0 to LCPRNG_MODULUS - 1
+ */
+export function normalizeSeed(seedValue: number): number {
+  if (!Number.isFinite(seedValue)) return 0
+  const whole = Math.trunc(seedValue)
+  return ((whole % LCPRNG_MODULUS) + LCPRNG_MODULUS) % LCPRNG_MODULUS
+}
+
+/** Number of distinct seeds before the sequence repeats. */
+export const SEED_PERIOD = LCPRNG_MODULUS
+
+/**
  * Seed offsets for different random sequences.
  * Using different offsets ensures independent random streams.
  */
@@ -32,7 +59,7 @@ export function seededRandom(seedValue: number): {
   next: () => number
   nextInt: (min: number, max: number) => number
 } {
-  let currentSeed = seedValue
+  let currentSeed = normalizeSeed(seedValue)
   return {
     next: () => {
       currentSeed =

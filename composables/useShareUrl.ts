@@ -6,16 +6,10 @@
 import type { UserPreferences } from './usePreferences'
 import { themes } from '../data/themes'
 import { copyToClipboard } from '../utils/clipboard'
+import { MAX_SEED } from '../utils/random'
 
 /** Valid theme IDs for URL validation */
 const VALID_THEME_IDS = new Set(themes.map(t => t.id))
-
-/**
- * Largest seed a share link accepts. Negative seeds send the generator's
- * indexes below zero (empty output), and past this the arithmetic is no
- * longer guaranteed exact.
- */
-const MAX_SHARE_SEED = 2_147_483_647
 
 /**
  * Encodes user preferences into URL search parameters.
@@ -66,7 +60,7 @@ export function encodePreferencesToUrl(preferences: UserPreferences, seed?: numb
  * Decodes the RNG seed from URL search parameters.
  *
  * @param params - URL search parameters to decode
- * @returns The seed, or undefined when absent or not a whole number from 0 to MAX_SHARE_SEED
+ * @returns The seed, or undefined when absent or not a whole number from 0 to MAX_SEED
  */
 export function decodeSeedFromUrl(params: URLSearchParams): number | undefined {
   const seed = params.get('seed')
@@ -74,7 +68,7 @@ export function decodeSeedFromUrl(params: URLSearchParams): number | undefined {
     return undefined
   }
   const seedNum = Number(seed)
-  return seedNum <= MAX_SHARE_SEED ? seedNum : undefined
+  return seedNum <= MAX_SEED ? seedNum : undefined
 }
 
 /**

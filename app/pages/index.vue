@@ -13,6 +13,7 @@ import { usePreferences } from "../../composables/usePreferences";
 import { useKeyboardShortcuts } from "../../composables/useKeyboardShortcuts";
 import { useShareUrl } from "../../composables/useShareUrl";
 import { copyToClipboard } from "../../utils/clipboard";
+import { SEED_PERIOD } from "../../utils/random";
 import { marked } from "marked";
 
 /** SEO meta tags from ipsumify.config */
@@ -100,8 +101,16 @@ const { loadPreferences, savePreferences, resetPreferences, DEFAULT_PREFERENCES 
 /** Share URL management */
 const { copyShareUrl, loadFromUrl, loadSeedFromUrl } = useShareUrl();
 
+/**
+ * Whether changes are written to localStorage yet. Off until the first load
+ * has been applied, so that merely opening someone's share link does not
+ * replace the visitor's own saved preferences. Once they change a setting
+ * themselves, what is on screen is saved as usual.
+ */
+let persistChanges = false;
+
 /** Scroll to top on mount and load saved preferences (client-side only) */
-onMounted(() => {
+onMounted(async () => {
   if (import.meta.client) {
     window.scrollTo(0, 0);
 
@@ -121,6 +130,10 @@ onMounted(() => {
     selectedTheme.value = urlPrefs.theme ?? savedPrefs.theme;
     blocks.value = urlPrefs.blocks ?? savedPrefs.blocks;
     Object.assign(options, savedPrefs.options, urlPrefs.options ?? {});
+
+    // Let the watcher run for the load itself before saving is switched on
+    await nextTick();
+    persistChanges = true;
   }
 });
 
@@ -129,6 +142,7 @@ if (import.meta.client) {
   watch(
     [selectedTheme, blocks, () => options],
     () => {
+      if (!persistChanges) return;
       savePreferences({
         theme: selectedTheme.value,
         blocks: blocks.value,
@@ -163,9 +177,26 @@ const generatedText = computed(() => {
   });
 });
 
-/** Picks a new random seed to regenerate output with different content */
+/**
+ * Picks a new random seed whose text differs from what is on screen.
+ *
+ * Seeds are drawn from the generator's whole period. Two seeds can still give
+ * the same text (a short output uses little of the sequence), so a draw that
+ * would leave the text unchanged is thrown away and drawn again.
+ */
 function handleRegenerate() {
-  seed.value = Math.floor(Math.random() * 100000);
+  const current = generatedText.value;
+  const params = {
+    theme: currentTheme.value,
+    blocks: blocks.value,
+    options: { ...options },
+  };
+  let next = seed.value;
+  for (let attempt = 0; attempt < 20; attempt++) {
+    next = Math.floor(Math.random() * SEED_PERIOD);
+    if (generateText({ ...params, seed: next }) !== current) break;
+  }
+  seed.value = next;
 }
 
 /** Resets all options and state to ipsumify.config defaults, scrolls to top */
@@ -177,12 +208,20 @@ function handleReset() {
   resetPreferences();
 
   if (import.meta.client) {
+    // A share link's settings would otherwise come back on the next reload
+    if (window.location.search) {
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
 
-/** Copies generated text to clipboard and shows "Copied!" for 2s */
-async function handleCopy(format: 'markdown' | 'html' = 'markdown') {
+/**
+ * Copies generated text to clipboard and shows "Copied!" for 2s.
+ *
+ * @returns Whether the copy succeeded
+ */
+async function handleCopy(format: 'markdown' | 'html' = 'markdown'): Promise<boolean> {
   try {
     let textToCopy = generatedText.value;
 
@@ -197,12 +236,14 @@ async function handleCopy(format: 'markdown' | 'html' = 'markdown') {
     setTimeout(() => {
       copied.value = false;
     }, COPY_FEEDBACK_DURATION);
+    return true;
   } catch (error) {
     console.error("Failed to copy text:", error);
     copyError.value = true;
     setTimeout(() => {
       copyError.value = false;
     }, COPY_FEEDBACK_DURATION);
+    return false;
   }
 }
 
@@ -308,9 +349,9 @@ useKeyboardShortcuts([
   {
     key: "c",
     altShift: true,
-    handler: () => {
-      handleCopy();
-      showShortcutFeedback("Copied to clipboard");
+    handler: async () => {
+      const ok = await handleCopy();
+      showShortcutFeedback(ok ? "Copied to clipboard" : "Copy failed");
     },
     description: "Copy to clipboard",
   },
@@ -359,17 +400,17 @@ useKeyboardShortcuts([
     <header class="border-b border-[#1a1a1a] px-6 py-6">
       <div class="mx-auto flex max-w-6xl items-center justify-between">
         <button
-          class="flex cursor-pointer items-center gap-4 transition-opacity hover:opacity-80"
+          class="flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80 sm:gap-4"
           aria-label="Ipsumify — reset to defaults and scroll to top"
           @click="handleReset"
         >
           <UIcon
             name="i-lucide-code"
-            class="h-14 w-14 text-[#00d4aa]"
+            class="h-10 w-10 text-[#00d4aa] sm:h-14 sm:w-14"
             aria-hidden="true"
           />
           <span
-            class="font-sans text-5xl font-black tracking-tight sm:text-6xl md:text-7xl"
+            class="font-sans text-4xl font-black tracking-tight sm:text-6xl md:text-7xl"
             >Ipsumify</span
           >
         </button>

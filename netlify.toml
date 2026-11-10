@@ -3,7 +3,7 @@ command = "yarn build"
 publish = "dist"
 
 [build.environment]
-NODE_VERSION = "22"
+NODE_VERSION = "22.23.4"
 
 [[headers]]
 for = "/*"
@@ -14,12 +14,10 @@ X-Frame-Options = "DENY"
 X-Content-Type-Options = "nosniff"
 # Control referrer information
 Referrer-Policy = "strict-origin-when-cross-origin"
-# XSS protection for legacy browsers
-X-XSS-Protection = "1; mode=block"
 # Restrict browser features and APIs
 Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
 # Force HTTPS connections
 Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-# Content Security Policy
-# unsafe-inline required for Nuxt/Vue inline scripts and styles at build time
-Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.iconify.design; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+# The Content-Security-Policy is not set here. It allows the page's inline
+# scripts by hash, so scripts/write-csp.mjs computes it from the built HTML and
+# appends it to dist/_headers during `yarn build`.

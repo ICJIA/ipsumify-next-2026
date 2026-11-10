@@ -4,7 +4,7 @@
  * @module tests/unit/generate
  */
 import { describe, it, expect } from 'vitest'
-import { generateText, generateBlocks, DEFAULT_OPTIONS } from '../../utils/generate'
+import { generateText, generateBlocks, markdownToPlainText, DEFAULT_OPTIONS } from '../../utils/generate'
 import type { GenerateParams } from '../../utils/generate'
 import type { Theme } from '../../data/themes'
 
@@ -143,5 +143,71 @@ describe('DEFAULT_OPTIONS', () => {
   it('has capitalize enabled and noWrap disabled', () => {
     expect(DEFAULT_OPTIONS.capitalize).toBe(true)
     expect(DEFAULT_OPTIONS.noWrap).toBe(false)
+  })
+})
+
+describe('generateBlocks matches generateText', () => {
+  const everything = {
+    headers: true, codeSnippets: true, blockquotes: true, lists: true, links: true, capitalize: true, noWrap: false,
+  }
+
+  it('returns blocks that all appear verbatim in the text when headers are on', () => {
+    // Headings draw from the sequence that sizes the blocks; a separate replay
+    // of the sizes used to return different blocks for almost every seed.
+    for (let seed = 0; seed < 200; seed++) {
+      const params = makeParams({ seed, blocks: 6, options: { ...DEFAULT_OPTIONS, headers: true } })
+      const text = generateText(params)
+      const blocks = generateBlocks(params)
+      expect(blocks).toHaveLength(6)
+      for (const block of blocks) expect(text).toContain(block)
+    }
+  })
+
+  it('holds with every option on, wrapped and unwrapped, upper and lower case', () => {
+    for (const noWrap of [false, true]) {
+      for (const capitalize of [false, true]) {
+        const params = makeParams({ seed: 7, blocks: 8, options: { ...everything, noWrap, capitalize } })
+        const text = generateText(params)
+        for (const block of generateBlocks(params)) expect(text).toContain(block)
+      }
+    }
+  })
+})
+
+describe('markdownToPlainText', () => {
+  const everything = {
+    headers: true, codeSnippets: true, blockquotes: true, lists: true, links: true, capitalize: true, noWrap: false,
+  }
+
+  it('removes every marker from wrapped output', () => {
+    const text = markdownToPlainText(generateText(makeParams({ blocks: 8, options: everything })))
+    expect(text).not.toMatch(/[#>`[\]]/)
+    expect(text).not.toMatch(/^- /m)
+    expect(text).not.toContain('https://example.com')
+    expect(text).toContain('Learn more')
+  })
+
+  it('removes mid-line markers from no-wrap output', () => {
+    const text = markdownToPlainText(generateText(makeParams({ blocks: 8, options: { ...everything, noWrap: true } })))
+    expect(text).not.toMatch(/[#>•`[\]]/)
+    expect(text).not.toContain('\n')
+    expect(text).not.toMatch(/ {2,}/)
+    expect(text).toContain('Item one Item two Item three')
+  })
+
+  it('leaves plain text alone', () => {
+    const plain = generateText(makeParams())
+    expect(markdownToPlainText(plain)).toBe(plain)
+  })
+})
+
+describe('seeds outside the normal range', () => {
+  it('produces full text for negative seeds', () => {
+    for (const seed of [-1, -6, -5000, -233281]) {
+      const text = generateText(makeParams({ seed, blocks: 5 }))
+      expect(text).not.toContain('undefined')
+      expect(text.length).toBeGreaterThan(100)
+      expect(text.split('\n\n')).toHaveLength(5)
+    }
   })
 })
