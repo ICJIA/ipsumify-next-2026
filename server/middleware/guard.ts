@@ -1,8 +1,8 @@
 /**
  * Runs before everything the Netlify Function serves.
  *
- * The site is one prerendered page plus an API. Netlify serves the page and
- * its assets as static files, with the headers from netlify.toml and
+ * The site is two prerendered pages plus an API. Netlify serves the page and
+ * their assets as static files, with the headers from netlify.toml and
  * dist/_headers. Every other URL reaches this function, and none of those
  * headers come with it, so the function sets its own.
  *
@@ -16,7 +16,7 @@
 import { defineEventHandler, setResponseHeader, setResponseHeaders, setResponseStatus } from 'h3'
 
 /** Paths the function has a real answer for. */
-const SERVED = new Set(['/', '/api/generate', '/robots.txt', '/sitemap.xml'])
+const SERVED = new Set(['/', '/technical-details', '/api/generate', '/robots.txt', '/sitemap.xml'])
 /** Build-time and framework paths (the prerenderer, the sitemap stylesheet). */
 const SERVED_PREFIXES = ['/_nuxt/', '/__nuxt', '/__sitemap__/', '/_fonts/', '/_ipx/']
 

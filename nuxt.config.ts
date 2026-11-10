@@ -37,7 +37,33 @@ export default defineNuxtConfig({
   // (ConfigProvider.js null ref in renderSlot). Re-enable when reka-ui fixes SSR support.
   ssr: false,
   nitro: {
-    preset: 'netlify'
+    preset: 'netlify',
+    hooks: {
+      // With ssr: false every prerendered page is the same shell, with the
+      // head from app.head below: the home page's title, description and
+      // canonical. A crawler that does not run JavaScript would read the
+      // technical details page as a copy of the home page, so its shell gets
+      // its own. (In the browser, the page's useSeoMeta does the same job.)
+      'prerender:generate'(route) {
+        if (route.route !== config.technicalDetailsPath || !route.contents) return
+        const swaps: [string, string][] = [
+          [`<title>${config.title}</title>`, `<title>${config.technicalDetailsTitle}</title>`],
+          [`rel="canonical" href="${config.url}"`, `rel="canonical" href="${config.technicalDetailsUrl}"`],
+          [`property="og:url" content="${config.url}"`, `property="og:url" content="${config.technicalDetailsUrl}"`],
+          [`property="og:title" content="${config.title}"`, `property="og:title" content="${config.technicalDetailsTitle}"`],
+          [`name="twitter:title" content="${config.title}"`, `name="twitter:title" content="${config.technicalDetailsTitle}"`],
+          [`name="description" content="${config.shortDescription}"`, `name="description" content="${config.technicalDetailsDescription}"`],
+          [`property="og:description" content="${config.shortDescription}"`, `property="og:description" content="${config.technicalDetailsDescription}"`],
+          [`name="twitter:description" content="${config.shortDescription}"`, `name="twitter:description" content="${config.technicalDetailsDescription}"`]
+        ]
+        for (const [from, to] of swaps) {
+          if (!route.contents.includes(from)) {
+            throw new Error(`[head] "${from}" not found in the prerendered ${route.route}; update the swaps in nuxt.config.ts`)
+          }
+          route.contents = route.contents.replace(from, to)
+        }
+      }
+    }
   },
 
   // Icons are compiled into the client bundle and never fetched. `scan` finds
@@ -74,7 +100,8 @@ export default defineNuxtConfig({
 
   // Route rules for prerendering
   routeRules: {
-    '/': { prerender: true }
+    '/': { prerender: true },
+    '/technical-details': { prerender: true }
   },
 
   // OG Image generation disabled — we define static OG/Twitter tags in app.head

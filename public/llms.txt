@@ -35,6 +35,7 @@ The same generator is on npm as `ipsumify`. `npx ipsumify` prints five paragraph
 ## Documentation
 
 - [Ipsumify app](https://ipsumify.com): The web-based generator
+- [Technical details](https://ipsumify.com/technical-details): How the generator works, with diagrams: the seeded random number generator, how blocks are built, the API's caching, and the npm package
 - [Source code & documentation](https://github.com/ICJIA/ipsumify-next-2026): GitHub repository and full README, including API and deployment guides
 - [License](https://github.com/ICJIA/ipsumify-next-2026/blob/main/LICENSE): MIT License
 

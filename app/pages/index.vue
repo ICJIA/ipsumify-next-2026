@@ -410,7 +410,7 @@ useKeyboardShortcuts([
 
     <!-- Header -->
     <header class="border-b border-[#1a1a1a] px-6 py-6">
-      <div class="mx-auto flex max-w-6xl items-center justify-between">
+      <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-4">
         <button
           class="flex cursor-pointer items-center gap-3 transition-opacity hover:opacity-80 sm:gap-4"
           aria-label="Ipsumify — reset to defaults and scroll to top"
@@ -427,9 +427,20 @@ useKeyboardShortcuts([
           >
         </button>
         <nav
-          class="flex h-full items-center self-center"
+          class="flex h-full items-center gap-5 self-center"
           aria-label="Main navigation"
         >
+          <NuxtLink
+            :to="config.technicalDetailsPath"
+            class="flex items-center gap-2 text-sm text-[#d1d5db] transition-colors hover:text-[#fafafa]"
+          >
+            <UIcon
+              name="i-lucide-cpu"
+              class="h-4 w-4"
+              aria-hidden="true"
+            />
+            <span>Technical details</span>
+          </NuxtLink>
           <a
             :href="config.github"
             target="_blank"

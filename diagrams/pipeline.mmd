@@ -1,0 +1,25 @@
+flowchart TD
+  S(["Seed<br/>a whole number"])
+  M["Normalize<br/>seed mod 233,280"]
+  S --> M
+  M --> R1["Stream 1<br/>starts at seed"]
+  M --> R2["Stream 2<br/>starts at seed + 500"]
+  M --> R3["Stream 3<br/>starts at seed + 1,000"]
+  R1 --> P["Shuffle the<br/>paragraphs"]
+  R2 --> H["Shuffle the<br/>headings"]
+  R3 --> Z["Choose each block's size<br/>1, 2 or 3 paragraphs"]
+  P --> B["Build the blocks"]
+  Z --> B
+  H --> E["Add markdown elements<br/>headings, code, quotes, lists, links"]
+  B --> E
+  E --> F{"Format"}
+  F --> F1["Markdown"]
+  F --> F2["Plain text"]
+  F --> F3["HTML"]
+  F --> F4["JSON"]
+  classDef step fill:#111111,stroke:#2a2a2a,color:#fafafa
+  classDef core fill:#00d4aa,stroke:#00d4aa,color:#0a0a0a
+  classDef out fill:#161616,stroke:#00d4aa,color:#fafafa
+  class M,R1,R2,R3,P,H,Z,B,E step
+  class S,F core
+  class F1,F2,F3,F4 out

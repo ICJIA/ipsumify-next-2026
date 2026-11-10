@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-11-10
+
+### Added
+- **A Technical details page**, linked from the top navigation, at `/technical-details`. It is laid out as an infographic: headline figures, large numbered sections, and four diagrams (how the three entry points share one function, the path from a seed to text, an API request through the cache, and the release process). A worked example on the page runs the real generator for any seed you type, so its numbers cannot drift from the code.
+- The diagrams are [Mermaid](https://mermaid.js.org/), rendered ahead of time to SVG. Sources are in `diagrams/`; `yarn build:diagrams` regenerates `public/diagrams/`. The page ships no diagram library and still makes no third-party requests.
+
+### Changed
+- The site now has two prerendered pages. `scripts/write-csp.mjs` hashes the inline scripts of every prerendered page into the one policy; the server guard serves the new path; and the new page's static HTML gets its own title, description and canonical URL at build time, so a crawler that does not run JavaScript does not read it as a copy of the home page.
+- The header wraps on narrow screens, where the navigation now sits under the wordmark.
+
+Verified before release: lint, typecheck, 128 tests and both builds pass; the page was checked in a browser under the production CSP on desktop and at phone width (no console errors, no horizontal overflow, navigation both ways, canonical and title correct); Lighthouse scores 100 in all four categories and axe reports 0 WCAG A/AA violations on desktop and mobile.
+
+The npm package is unchanged and was not republished; `ipsumify@2.6.0` remains the latest on npm.
+
 ## [2.6.1] - 2026-11-10
 
 ### Added
@@ -182,7 +196,8 @@ Verified locally before release: `yarn install --frozen-lockfile`, `yarn lint`, 
 - SSR-safe generation with seeded random number generator
 - Netlify deployment configuration
 
-[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.1...HEAD
+[Unreleased]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.1...v2.7.0
 [2.6.1]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/ICJIA/ipsumify-next-2026/compare/v2.4.0...v2.5.0

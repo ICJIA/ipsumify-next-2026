@@ -28,6 +28,15 @@ export const config = {
   url: "https://ipsumify.com",
   /** @type {string} GitHub repository URL */
   github: "https://github.com/ICJIA/ipsumify-next-2026",
+  /** @type {string} Path of the page that explains how the generator works */
+  technicalDetailsPath: "/technical-details",
+  /** @type {string} Full URL of that page, for its canonical and social tags */
+  technicalDetailsUrl: "https://ipsumify.com/technical-details",
+  /** @type {string} Title of that page */
+  technicalDetailsTitle: "Technical Details - Ipsumify",
+  /** @type {string} Description of that page */
+  technicalDetailsDescription:
+    "How Ipsumify works: the seeded generator behind the text, and how the website, the public API and the npm package share it.",
   /** @type {string} Changelog, linked from the footer */
   changelog: "https://github.com/ICJIA/ipsumify-next-2026/blob/main/CHANGELOG.md",
 
@@ -65,7 +74,7 @@ export const config = {
   ogImageAlt: "Ipsumify - Easily create placeholder text",
 
   /** @type {string} App version - keep in sync with package.json and packages/ipsumify/package.json (a unit test checks) */
-  version: "2.6.1",
+  version: "2.7.0",
 
   /** @type {string} Default theme ID for generator (e.g. lorem, dog, cat) */
   defaultThemeId: "lorem",

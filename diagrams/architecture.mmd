@@ -1,0 +1,18 @@
+flowchart LR
+  W["Website<br/>runs in your browser"]
+  A["API<br/>GET /api/generate"]
+  N["npm package<br/>npx ipsumify"]
+  G(["generateText()<br/>one pure function"])
+  T[("Themes<br/>fixed word lists")]
+  O["The same text,<br/>every time"]
+  W --> G
+  A --> G
+  N --> G
+  T --> G
+  G --> O
+  classDef entry fill:#111111,stroke:#2a2a2a,color:#fafafa
+  classDef core fill:#00d4aa,stroke:#00d4aa,color:#0a0a0a
+  classDef data fill:#161616,stroke:#00d4aa,color:#fafafa
+  class W,A,N entry
+  class G core
+  class T,O data

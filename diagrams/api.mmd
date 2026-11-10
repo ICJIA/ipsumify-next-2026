@@ -1,0 +1,20 @@
+sequenceDiagram
+  autonumber
+  participant C as You
+  participant E as Netlify CDN
+  participant F as Function
+  C->>E: GET /api/generate?theme=dog&blocks=3
+  alt Already cached
+    E-->>C: 200 JSON, from the cache
+  else Not cached
+    E->>F: Run the function
+    F->>F: Read the query strictly
+    alt Well-formed request
+      F->>F: generateText()
+      F-->>E: 200 JSON, cache for 1 hour
+      E-->>C: 200 JSON
+    else Anything else
+      F-->>E: 400 JSON, never cached
+      E-->>C: 400 JSON
+    end
+  end

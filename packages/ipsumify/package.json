@@ -1,6 +1,6 @@
 {
   "name": "ipsumify",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "description": "Lorem ipsum generator for the command line and Node: markdown-ready placeholder text with themes, seeds, and plain text, HTML or JSON output.",
   "keywords": [
     "lorem",

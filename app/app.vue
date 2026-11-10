@@ -15,7 +15,11 @@ const route = useRoute();
  * empty), which Lighthouse flags as an invalid canonical. This high-priority entry
  * wins unhead's dedupe so the rendered canonical stays absolute.
  */
-const canonicalHref = computed(() => new URL(route.path, config.url).href);
+const canonicalHref = computed(() => {
+  // One address per page: /technical-details/ and /technical-details are the same
+  const path = route.path.length > 1 ? route.path.replace(/\/+$/, "") : route.path;
+  return new URL(path, config.url).href;
+});
 
 /**
  * Plain title template. @nuxtjs/seo's default, "%s %separator %siteName", never

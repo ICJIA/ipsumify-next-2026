@@ -1,0 +1,12 @@
+flowchart TD
+  T(["Tag vX.Y.Z pushed"])
+  T --> CI["CI<br/>lint, types, tests, build"]
+  T --> D["Netlify<br/>builds and deploys the site"]
+  CI --> P["publish.sh<br/>rebuilds and tests the tagged commit"]
+  P --> K["Packs the package, installs it<br/>in a scratch project, and runs it"]
+  K --> Y{"You approve<br/>in npm"}
+  Y --> NPM(["ipsumify on npm"])
+  classDef step fill:#111111,stroke:#2a2a2a,color:#fafafa
+  classDef core fill:#00d4aa,stroke:#00d4aa,color:#0a0a0a
+  class CI,D,P,K step
+  class T,Y,NPM core

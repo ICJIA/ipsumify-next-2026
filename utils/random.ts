@@ -8,8 +8,8 @@
  * Linear Congruential Pseudo-Random Number Generator (LCPRNG) constants.
  * These values produce a full-period generator for modulus 233280.
  */
-const LCPRNG_MULTIPLIER = 9301
-const LCPRNG_INCREMENT = 49297
+export const LCPRNG_MULTIPLIER = 9301
+export const LCPRNG_INCREMENT = 49297
 const LCPRNG_MODULUS = 233280
 
 /**

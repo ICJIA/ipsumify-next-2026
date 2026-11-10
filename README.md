@@ -30,6 +30,10 @@ From the API (again the real responses, rendered as an image):
 
 ![Terminal output of two curl requests to the API: a JSON response, and the message from a 400](documentation/screenshot-api.png)
 
+The [technical details](https://ipsumify.com/technical-details) page:
+
+![The technical details page: a large heading, How Ipsumify works, above six headline figures](documentation/screenshot-technical-details.png)
+
 On a phone:
 
 <img src="documentation/screenshot-mobile.png" alt="Ipsumify on a phone-sized screen" width="320">
@@ -67,6 +71,7 @@ https://ipsumify.com
 - **One-Click Actions** - Regenerate, copy as Markdown or as rendered HTML, or download as an `.md` file, all from the bar above the output
 - **Shareable URLs** - Share your exact settings and seed via URL so others see the same output
 - **Remembered Preferences** - Theme, block count, and options are saved in your browser's `localStorage`; click the Ipsumify logo to reset everything to defaults
+- **Technical Details Page** - [ipsumify.com/technical-details](https://ipsumify.com/technical-details) explains how it all works, as an infographic with diagrams and a live worked example
 - **Command Line and npm Package** - `npx ipsumify` prints lorem ipsum in your terminal; `import ipsumify from 'ipsumify'` does the same in Node
 - **Public API** - REST endpoint with multiple output formats (markdown, JSON, text, HTML) — no API key required
 - **Deterministic Output** - Seeded RNG produces identical results for the same parameters, enabling CDN caching
@@ -454,8 +459,9 @@ node .output/server/index.mjs
 | Command            | Description                                     |
 | ------------------ | ----------------------------------------------- |
 | `yarn dev`         | Start development server with hot reload        |
-| `yarn build`       | Build for production (hybrid: static pages + serverless API), then write the page's CSP into `dist/_headers` |
+| `yarn build`       | Build for production (hybrid: static pages + serverless API), then write the pages' CSP into `dist/_headers` |
 | `yarn build:cli`   | Build the npm package into `packages/ipsumify/dist/`         |
+| `yarn build:diagrams` | Re-render the Mermaid diagrams after editing a file in `diagrams/`. Uses an installed Chrome (set `CHROME_PATH` if it is not in the default macOS location) |
 | `yarn generate`    | Generate a fully static site in `.output/public` (no API, and no Content-Security-Policy: `write-csp.mjs` runs only after `yarn build`) |
 | `yarn preview`     | Not supported for the Netlify build this project makes; it prints a message and exits. To run a production build locally, see below |
 | `yarn test`        | Run lint, typecheck, and unit tests                          |
@@ -479,9 +485,11 @@ ipsumify/
 │   │   └── css/
 │   │       └── main.css    # Global styles and Tailwind imports
 │   └── pages/
-│       └── index.vue       # Main page component
+│       ├── index.vue             # The generator
+│       └── technical-details.vue # How it works: infographic with diagrams
 ├── data/
 │   └── themes.ts           # Theme content (paragraphs, headings, list items)
+├── diagrams/               # Mermaid sources for the technical details page
 ├── composables/
 │   ├── useKeyboardShortcuts.ts # Keyboard shortcut handler
 │   ├── useLocalStorage.ts      # Type-safe localStorage wrapper
@@ -490,6 +498,7 @@ ipsumify/
 ├── packages/
 │   └── ipsumify/               # The npm package: command line and library
 ├── scripts/
+│   ├── build-diagrams.mjs      # Renders diagrams/*.mmd to public/diagrams/*.svg
 │   └── write-csp.mjs           # Post-build: hashes inline scripts into the CSP
 ├── server/
 │   ├── api/
@@ -506,6 +515,7 @@ ipsumify/
 │   └── unit/               # Vitest unit tests (apiQuery, cli, generate, html, keyboard, random, useLocalStorage, usePreferences, useShareUrl)
 ├── documentation/          # Screenshots for README
 ├── public/
+│   ├── diagrams/           # The diagrams, rendered to SVG (yarn build:diagrams)
 │   ├── icon.svg            # Favicon
 │   ├── llms.txt            # Site and API summary for LLMs (llmstxt.org)
 │   └── og-image.png        # Open Graph image for social sharing
@@ -529,6 +539,7 @@ ipsumify/
 | ---------------------------------------------- | -------------------------------------------- |
 | `name`, `title`, `description`, `shortDescription` | Site identity and SEO                    |
 | `url`, `github`, `changelog`, `author`         | URLs and attribution; `github` and `changelog` are linked from the footer |
+| `technicalDetailsPath`, `technicalDetailsUrl`, `technicalDetailsTitle`, `technicalDetailsDescription` | The technical details page's address and head tags |
 | `datePublished`, `dateModified`                | ISO dates for the JSON-LD structured data; update `dateModified` by hand on release |
 | `locale`, `defaultLocale`                      | Open Graph locale and HTML `lang`            |
 | `ogImageUrl`, `ogImageWidth`, `ogImageHeight`, `ogImageAlt`, `faviconPath` | Social image and favicon |
@@ -570,7 +581,7 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 - **Build command:** `yarn build`
 - **Publish directory:** `dist`
 - **Node version:** 22.23.4 (set in `netlify.toml`)
-- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS come from `netlify.toml`. The Content-Security-Policy is generated at build time by `scripts/write-csp.mjs`, which hashes the page's inline scripts and appends the policy to `dist/_headers`. Netlify applies all of these to the static page and its assets. Everything else is answered by the function, which sets its own: `server/middleware/guard.ts` for every response, and `server/api/generate.get.ts` for the API
+- **Security headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS come from `netlify.toml`. The Content-Security-Policy is generated at build time by `scripts/write-csp.mjs`, which hashes the inline scripts of every prerendered page and writes the policy to `dist/_headers`. Netlify applies all of these to the static pages and their assets. Everything else is answered by the function, which sets its own: `server/middleware/guard.ts` for every response, and `server/api/generate.get.ts` for the API
 - **Unknown URLs** get a plain-text 404 from the function, not the app's HTML shell
 - **API:** `server/api/` routes are automatically deployed as Netlify Functions
 
@@ -580,7 +591,7 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 
 ## Architecture
 
-- **Hybrid deployment:** The page is prerendered as a static file. A serverless function (Netlify Functions via Nitro) runs the API, serves `robots.txt` and `sitemap.xml`, and answers every other URL with a 404
+- **Hybrid deployment:** The two pages (`/` and `/technical-details`) are prerendered as static files. A serverless function (Netlify Functions via Nitro) runs the API, serves `robots.txt` and `sitemap.xml`, and answers every other URL with a 404
 - **Shared generation logic:** Both the web UI and API use `utils/generate.ts` — same code, same output
 - **Deterministic output:** Uses a seeded LCPRNG so identical parameters always produce identical text (enables aggressive CDN caching)
 - **Config hierarchy:** `ipsumify.config.ts` → `nuxt.config.ts`; theme content lives in `data/themes.ts`
@@ -592,6 +603,8 @@ The project deploys as a hybrid site on Netlify: pages are prerendered as static
 SSR is disabled because reka-ui (used by Nuxt UI v4) crashed during server-side rendering when the app was built. This means `useSeoMeta()` in page components only runs client-side — without further work, crawlers and SEO audit tools would see a raw HTML shell without Open Graph, Twitter Card, or canonical tags.
 
 **Solution:** All SEO meta tags are defined explicitly in `app.head` inside `nuxt.config.ts` rather than relying on `useSeoMeta()`. Tags defined in `app.head` are baked into the prerendered HTML at build time, so they're visible to crawlers without JavaScript execution.
+
+Every prerendered page starts as the same shell, so the technical details page's static HTML is given its own title, description, and canonical by a `prerender:generate` hook in `nuxt.config.ts`.
 
 If you modify SEO tags, update them in **both** places:
 - `nuxt.config.ts` → `app.head.meta` (for crawlers)

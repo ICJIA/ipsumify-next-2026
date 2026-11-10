@@ -1,6 +1,6 @@
 {
   "name": "ipsumify",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,6 +9,7 @@
   "scripts": {
     "build": "nuxt build && node scripts/write-csp.mjs",
     "build:cli": "node packages/ipsumify/build.mjs",
+    "build:diagrams": "node scripts/build-diagrams.mjs",
     "dev": "nuxt dev",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
